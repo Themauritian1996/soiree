@@ -53,13 +53,13 @@ export default function Library() {
   const kind = nav.libKind;
   const [view, setView] = useState<View>('shelf');
   const [group, setGroup] = useState<Record<Kind, Group>>({ game: 'type', movie: 'genre', series: 'genre' });
-  const [status, setStatus] = useState<'all' | 'owned' | 'wish'>('all');
+  const [status, setStatus] = useState<'all' | 'owned' | 'wish' | 'lent'>('all');
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<'recent' | 'alpha' | 'match' | 'time' | 'year'>('alpha');
   const [addMenu, setAddMenu] = useState(false);
 
   const list = useMemo(() => items.filter((i) => i.kind === kind)
-    .filter((i) => status === 'all' || (status === 'owned' ? i.status === 'owned' || i.status === 'seen' : i.status === 'wishlist' || i.status === 'watchlist'))
+    .filter((i) => status === 'all' || (status === 'lent' ? !!i.lentTo : status === 'owned' ? i.status === 'owned' || i.status === 'seen' : i.status === 'wishlist' || i.status === 'watchlist'))
     .filter((i) => !q || norm([i.title, ti(i), i.originalTitle, i.designer, i.director, ...(i.cast || []), ...(i.categories || []), ...(i.genres || [])].join(' ')).includes(norm(q))),
   [items, kind, status, q]);
 
@@ -92,9 +92,9 @@ export default function Library() {
       <div className="search mt12"><Search size={18} /><input className="input" placeholder={kind === 'game' ? t('Titre, auteur, type…') : t('Titre, acteur, réalisateur…')} value={q} onChange={(e) => setQ(e.target.value)} /></div>
 
       <div className="scroll-x mt12">
-        {(['all', 'owned', 'wish'] as const).map((s) => (
+        {(['all', 'owned', 'wish', 'lent'] as const).map((s) => (
           <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
-            {s === 'all' ? t('Tout') : s === 'owned' ? t('À la maison') : kind === 'game' ? t('Liste de souhaits') : t('À voir')}
+            {s === 'all' ? t('Tout') : s === 'owned' ? t('À la maison') : s === 'lent' ? `🤝 ${t('Prêtés')}` : kind === 'game' ? t('Liste de souhaits') : t('À voir')}
           </button>
         ))}
         <span style={{ width: 1, background: 'var(--line)', margin: '4px 2px' }} />

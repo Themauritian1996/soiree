@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "36343998484",
+    "project_id": "soiree-59635",
+    "storage_bucket": "soiree-59635.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:36343998484:android:1c7a7ff13ccc3cec0a5f01",
+        "android_client_info": {
+          "package_name": "ca.chris.soiree"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "36343998484-4bf5vfurbmahfbq548n9td7qgu1diogf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ca.chris.soiree",
+            "certificate_hash": "d58884a868ec2f4b03eaa88044fe8e3d12ca64e0"
+          }
+        },
+        {
+          "client_id": "36343998484-uphir77fkom4s9vkv30bdkgrgcgoqcqf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ca.chris.soiree",
+            "certificate_hash": "6bdfa5e4e6bc20973cefcb05b8ebcc973618af2b"
+          }
+        },
+        {
+          "client_id": "36343998484-ft4l6d4jm4gej1rub2dvdcnv7abqq61f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC34Y5KiV7eoupxK4ip5UKIEGXy-cvswRY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "36343998484-ft4l6d4jm4gej1rub2dvdcnv7abqq61f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

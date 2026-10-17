@@ -9,13 +9,25 @@ import { Capacitor } from '@capacitor/core';
 import { t } from './i18n';
 
 const env = import.meta.env;
-const cfg = {
-  apiKey: env.VITE_FIREBASE_API_KEY,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: env.VITE_FIREBASE_APP_ID,
+// Configuration Web publique du projet Firebase « soiree-59635 » (non secrète : la sécurité
+// repose sur les règles Firestore). Les variables VITE_FIREBASE_* peuvent la remplacer.
+// Le mode « preview » (démo autonome) n'utilise pas Firebase.
+const DEFAULT = {
+  apiKey: 'AIzaSyApkOya-5WmB4xgD-A5fHbAXPmu3sqoGH0',
+  authDomain: 'soiree-59635.firebaseapp.com',
+  projectId: 'soiree-59635',
+  storageBucket: 'soiree-59635.firebasestorage.app',
+  messagingSenderId: '36343998484',
+  appId: '1:36343998484:web:555ab64b79d47c2a0a5f01',
+};
+const usePreview = import.meta.env.MODE === 'preview';
+const cfg = usePreview ? ({} as typeof DEFAULT) : {
+  apiKey: env.VITE_FIREBASE_API_KEY || DEFAULT.apiKey,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || DEFAULT.authDomain,
+  projectId: env.VITE_FIREBASE_PROJECT_ID || DEFAULT.projectId,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || DEFAULT.storageBucket,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || DEFAULT.messagingSenderId,
+  appId: env.VITE_FIREBASE_APP_ID || DEFAULT.appId,
 };
 
 export const firebaseEnabled = !!(cfg.apiKey && cfg.projectId && cfg.appId);

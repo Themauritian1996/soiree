@@ -6,6 +6,29 @@ import { Sheet, Stepper, Toggle } from '../components/ui';
 import { PROFILE_COLORS } from '../lib/vocab';
 import { lsGet, lsSet, uid, vibrate } from '../lib/util';
 import { t as tr } from '../lib/i18n';
+import Stats from '../components/Stats';
+
+// ------------------------------------------------------------------ Soirée cinéma
+// Choix rapide « film ou épisodes ? » selon le temps qui reste avant le dodo, + entracte.
+function MovieNight() {
+  const [bed, setBed] = usePersist('bedtime', '23:00');
+  const [now, setNow] = useState(new Date());
+  useEffect(() => { const iv = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(iv); }, []);
+  const [h, m] = bed.split(':').map(Number);
+  const end = new Date(now); end.setHours(h, m, 0, 0);
+  if (end.getTime() < now.getTime() - 3600e3) end.setDate(end.getDate() + 1);
+  const left = Math.max(0, Math.round((end.getTime() - now.getTime()) / 60000));
+  const advice = left >= 150 ? tr('Assez de temps pour un grand film 🎬') : left >= 95 ? tr('Un film court ou 2 épisodes 📺') : left >= 40 ? tr('Un ou deux épisodes, pas plus 😴') : tr('Un seul épisode… ou au lit !');
+  return (
+    <div className="col gap20" style={{ alignItems: 'center' }}>
+      <div className="field" style={{ width: '100%' }}><label>{tr('Heure du dodo')}</label><input className="input" type="time" value={bed} onChange={(e) => setBed(e.target.value)} /></div>
+      <div className="timer-big">{Math.floor(left / 60)} h {String(left % 60).padStart(2, '0')}</div>
+      <p className="center" style={{ fontSize: 18 }}>{advice}</p>
+      <p className="small muted center">{tr('Astuce : dans Suggestions, choisis « Max » selon ce temps pour filtrer les films trop longs.')}</p>
+      <Timer />
+    </div>
+  );
+}
 
 function usePersist<T>(key: string, init: T): [T, (v: T | ((p: T) => T)) => void] {
   const [v, setV] = useState<T>(() => lsGet(`soiree.tool.${key}`, init));
@@ -20,6 +43,8 @@ const TOOLS: { id: ToolId; title: string; desc: string; emoji: string; g: [strin
   { id: 'timer', title: 'Minuterie', desc: 'Sablier, temps par tour', emoji: '⏳', g: ['#22D3EE', '#6366F1'] },
   { id: 'chooser', title: 'Premier joueur', desc: 'Tout le monde pose un doigt !', emoji: '👆', g: ['#EC4899', '#F97316'] },
   { id: 'teams', title: 'Équipes', desc: 'Former des équipes au hasard', emoji: '🤝', g: ['#A3E635', '#10B981'] },
+  { id: 'stats', title: 'Journal & stats', desc: 'Parties, gagnants, prêts', emoji: '📒', g: ['#6366F1', '#8B5CF6'] },
+  { id: 'night', title: 'Soirée cinéma', desc: 'Minuterie d’entracte, popcorn, mode nuit', emoji: '🍿', g: ['#EF4444', '#F59E0B'] },
 ];
 
 export default function Tools() {
@@ -50,6 +75,8 @@ export function ToolScreen({ tool, onClose }: { tool: ToolId; players?: string[]
       {tool === 'counters' && <Counters />}
       {tool === 'timer' && <Timer />}
       {tool === 'teams' && <Teams />}
+      {tool === 'stats' && <Stats />}
+      {tool === 'night' && <MovieNight />}
     </Sheet>
   );
 }

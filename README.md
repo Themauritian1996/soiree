@@ -14,6 +14,9 @@ Application (APK Android + site web) pour cataloguer tes **jeux de société, fi
 | **Outils** | Dés (d4 → d100, pièce, dés personnalisés, verrouillage), feuille de score, compteurs personnalisables, minuterie/sablier, premier joueur (doigts sur l'écran), équipes au hasard. |
 | **Bilingue FR/EN** | Toute l'interface, les quiz, les fiches IA (générées dans les deux langues), les questions et suggestions. Sélecteur FR/EN sur l'accueil et dans Réglages ; bouton « Traduire » pour les fiches plus anciennes. |
 | **Thème** | Sombre (par défaut), clair ou selon le système — dans Réglages. |
+| **Infos gratuites** | Affiches/saisons/diffuseur des séries via **TVmaze**, images et résumés des films et jeux via **Wikipédia** — sans clé. Liens IMDb, bande-annonce, « où le voir » (JustWatch), BoardGameGeek, vidéo « comment jouer ». TMDB optionnel. |
+| **Journal & prêts** | Noter chaque partie (joueurs, gagnants, scores) ou visionnement, classement des victoires, les plus joués ; suivre à qui on a prêté un jeu ou un DVD. |
+| **Soirée cinéma** | Temps restant avant le dodo → film ou épisodes ? + minuterie. |
 | **Comptes** | Google ou courriel (Firebase). Un **foyer** partagé : ta conjointe rejoint avec un code et voit la même collection. Mode local sans compte possible. |
 
 ---
@@ -94,3 +97,10 @@ assets/                       icône et écran de démarrage
 - Images : vignettes recadrées depuis tes photos (JPEG compressé, stockées dans Firestore — pas besoin de Firebase Storage payant).
 - Connexion Google dans l'APK : plugin natif `@capacitor-firebase/authentication` ; exige `google-services.json` + empreintes SHA de la clé de signature.
 - BoardGameGeek n'est pas utilisé : son API exige depuis 2025 une application approuvée et un jeton. Gemini remplit les fiches de jeux.
+
+---
+## Déploiement actuel
+- Firebase : projet `soiree-59635` (Auth Google + courriel, Firestore Montréal, règles publiées).
+- Site : https://themauritian1996.github.io/soiree/
+- APK : https://github.com/Themauritian1996/soiree/releases/latest
+- Signature : clé CI `android-config/soiree-ci.p12` (empreintes enregistrées dans Firebase). Pour une clé privée, ajouter les secrets `KEYSTORE_BASE64` / `KEYSTORE_PASSWORD` et leurs empreintes SHA dans Firebase.

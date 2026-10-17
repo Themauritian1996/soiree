@@ -1,7 +1,25 @@
 // Traductions anglaises. Clé = texte français exact utilisé dans t('…').
 export const EN: Record<string, string> = {
   // Général / erreurs
-  'Erreur': 'Error', 'Fiche :': 'Sheet:', 'Fermer': 'Close', '{n} étoiles': '{n} stars',
+  // v1.2 — journal, prêts, liens, soirée cinéma
+  'Noter une partie': 'Log a game', 'Noter un visionnement': 'Log a viewing', 'Avec qui ?': 'With whom?',
+  'Invités (séparés par des virgules)': 'Guests (comma-separated)', 'Qui a gagné ?': 'Who won?', 'Score': 'Score', 'Ma note': 'My rating',
+  'Notes (variante, moments drôles…)': 'Notes (variant, funny moments…)', 'Prêté à {name}': 'Lent to {name}', 'depuis le {d}': 'since {d}',
+  'Retour enregistré': 'Return recorded', 'Il est revenu': 'It’s back', 'Prêter à quelqu’un': 'Lend to someone', 'Diffusé sur': 'Airs on',
+  'Prêt noté': 'Loan recorded', 'Nom de la personne': 'Person’s name', 'Dernières parties': 'Recent games', 'Visionnements': 'Viewings',
+  'Prêtés': 'Lent out', 'Journal & stats': 'Log & stats', 'Parties, gagnants, prêts': 'Games, winners, loans',
+  'Soirée cinéma': 'Movie night', 'Minuterie d’entracte, popcorn, mode nuit': 'Intermission timer, time left before bed',
+  'Le journal est vide': 'The log is empty',
+  'Ouvre un jeu ou un film et touche « On y a joué » ou « Vu » pour noter une partie, les gagnants et les scores.': 'Open a game or movie and tap “We played it” or “Watched” to log it with winners and scores.',
+  'parties': 'games', 'visionnements': 'viewings', 'de plaisir': 'of fun', 'Classement des victoires': 'Win leaderboard',
+  'Les plus joués / vus': 'Most played / watched', 'Prêtés en ce moment': 'Currently lent out', 'Journal': 'Log',
+  'Heure du dodo': 'Bedtime', 'Assez de temps pour un grand film 🎬': 'Enough time for a long movie 🎬',
+  'Un film court ou 2 épisodes 📺': 'A short movie or 2 episodes 📺', 'Un ou deux épisodes, pas plus 😴': 'One or two episodes, no more 😴',
+  'Un seul épisode… ou au lit !': 'Just one episode… or bed!',
+  'Astuce : dans Suggestions, choisis « Max » selon ce temps pour filtrer les films trop longs.': 'Tip: in Suggestions, set “Max” to this time to filter out movies that are too long.',
+  'Infos gratuites sans clé': 'Free info, no key needed',
+  'Affiches et infos des séries (TVmaze) et des films/jeux (Wikipédia) sont ajoutées automatiquement, sans clé. TMDB est optionnel pour les notes et la distribution exactes.': 'Posters and info for series (TVmaze) and movies/games (Wikipedia) are added automatically, no key needed. TMDB is optional for exact ratings and cast.',
+  'Erreur': 'Error','Fiche :': 'Sheet:', 'Fermer': 'Close', '{n} étoiles': '{n} stars',
   'Connexion Google annulée': 'Google sign-in cancelled',
   'Courriel ou mot de passe invalide.': 'Invalid email or password.', 'Mot de passe invalide.': 'Invalid password.',
   'Aucun compte avec ce courriel.': 'No account with this email.', 'Ce courriel a déjà un compte.': 'This email already has an account.',

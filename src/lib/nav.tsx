@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useState } from 'react';
 import type { Kind } from './types';
 
 export type Tab = 'home' | 'library' | 'suggest' | 'tools' | 'profiles';
-export type ToolId = 'dice' | 'score' | 'timer' | 'chooser' | 'counters' | 'teams';
+export type ToolId = 'dice' | 'score' | 'timer' | 'chooser' | 'counters' | 'teams' | 'stats' | 'night';
 export type Route =
   | { t: 'item'; id: string }
   | { t: 'scan'; kind?: Kind }

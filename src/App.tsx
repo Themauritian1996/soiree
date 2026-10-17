@@ -4,6 +4,8 @@ import { useStore } from './lib/store';
 import { useNav, type Tab } from './lib/nav';
 import { enrich, NoKeyError } from './lib/gemini';
 import { tmdbLookup } from './lib/tmdb';
+import { freeLookup } from './lib/meta';
+import type { Item } from './lib/types';
 import { sleep } from './lib/util';
 import Login from './screens/Login';
 import Home from './screens/Home';
@@ -93,34 +95,57 @@ export default function App() {
   );
 }
 
-/** File d'attente : complète automatiquement les fiches ajoutées (IA + TMDB). */
+/** File d'attente : complète les fiches ajoutées (Gemini + TMDB si clés, sinon TVmaze / Wikipédia gratuits). */
 function Enricher() {
   const { items, settings, updateItem } = useStore();
   const busy = useRef(false);
   const [current, setCurrent] = useState<string | null>(null);
-  const pending = items.filter((i) => !i.enriched && !i.enrichError);
+  const [tick, setTick] = useState(0);
+  const needsAi = (i: Item) => !i.enriched && !i.enrichError && !!settings.geminiKey;
+  const pending = items.filter((i) => needsAi(i) || !i.freeLookupDone);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
   useEffect(() => {
-    if (busy.current || !pending.length || !settings.geminiKey) return;
+    if (busy.current || !pending.length) return;
     busy.current = true;
     (async () => {
       const it = pending[0];
       setCurrent(it.title);
-      try {
-        const r = await enrich(settingsRef.current, it.kind, it.title, it.year ? `(${it.year})` : '');
-        let t = null;
-        try { t = await tmdbLookup(settingsRef.current, it.kind, r.originalTitle || r.title || it.title, r.year); } catch { /* TMDB optionnel */ }
-        await updateItem(it.id, { ...r, ...(t || {}), title: r.title || it.title, image: t?.image || it.image });
-      } catch (e: any) {
-        if (!(e instanceof NoKeyError)) await updateItem(it.id, { enrichError: e?.message || t('Erreur') });
+      let patch: Partial<Item> = {};
+      let base: Item = it;
+      if (needsAi(it)) {
+        try {
+          const r = await enrich(settingsRef.current, it.kind, it.title, it.year ? `(${it.year})` : '');
+          let tm = null;
+          try { tm = await tmdbLookup(settingsRef.current, it.kind, r.originalTitle || r.title || it.title, r.year); } catch { /* TMDB optionnel */ }
+          patch = { ...r, ...(tm || {}), title: r.title || it.title, image: tm?.image || it.image };
+        } catch (e: any) {
+          if (!(e instanceof NoKeyError)) patch = { enrichError: e?.message || t('Erreur') };
+        }
+        base = { ...it, ...patch };
       }
-      await sleep(350);
+      if (!base.freeLookupDone) {
+        try {
+          const f = await freeLookup(base);
+          const cropOnly = !base.image || base.image.startsWith('data:');
+          const extra: Partial<Item> = { freeLookupDone: true };
+          // Une vraie affiche (film/série) vaut mieux qu'un recadrage de photo
+          if (f.image && (!base.image || (cropOnly && base.kind !== 'game'))) extra.image = f.image;
+          if (!base.summary && f.wikiSummary) extra.summary = f.wikiSummary;
+          for (const k of ['year', 'runtime', 'seasons', 'cast', 'tmdbRating', 'whereToWatch', 'imdbId', 'wikiUrl', 'externalUrl'] as const) {
+            if ((base as any)[k] == null && (f as any)[k] != null) (extra as any)[k] = (f as any)[k];
+          }
+          patch = { ...patch, ...extra };
+        } catch { patch = { ...patch, freeLookupDone: true }; }
+      }
+      await updateItem(it.id, patch);
+      await sleep(300);
       setCurrent(null);
       busy.current = false;
+      setTick((x) => x + 1);
     })();
-  }, [pending.length, settings.geminiKey, current]);
+  }, [pending.length, settings.geminiKey, tick]);
 
   if (!current) return null;
   return (

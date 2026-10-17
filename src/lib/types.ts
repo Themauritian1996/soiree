@@ -62,6 +62,27 @@ export interface Item {
   tmdbRating?: number;
   whereToWatch?: string;
   loc?: Partial<Record<Lang, LocText>>; // versions FR / EN des textes
+  imdbId?: string;
+  wikiUrl?: string;
+  wikiSummary?: string;
+  externalUrl?: string;
+  summaryEn?: string;
+  lentTo?: string; // prêté à…
+  lentAt?: number;
+  freeLookupDone?: boolean;
+}
+
+/** Une partie jouée / un visionnement (journal) */
+export interface Play {
+  id: string;
+  itemId: string;
+  date: number;
+  players: string[]; // ids de profils ou noms libres
+  winners: string[];
+  scores?: Record<string, number>;
+  durationMin?: number;
+  notes?: string;
+  rating?: number;
 }
 
 export interface Prefs {

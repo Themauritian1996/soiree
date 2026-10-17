@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ArrowLeft, Users, Clock, Baby, Brain, Play, Check, Trash2, RefreshCw, Pencil, Camera, Send, Heart, Film, Tv, Star, Sparkles } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Baby, Brain, Play, Check, Trash2, RefreshCw, Pencil, Camera, Send, Heart, Film, Tv, Star, Sparkles, Handshake, ExternalLink, Trophy, Radio } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { useNav } from '../lib/nav';
 import { Avatar, Cover, Sheet, Stars, Spinner, useToast } from '../components/ui';
@@ -10,6 +10,8 @@ import { fileToImage, resize } from '../lib/image';
 import type { Item } from '../lib/types';
 import { FORMATS, GAME_CATEGORIES, KIND_META, MEDIA_GENRES, MOODS } from '../lib/vocab';
 import { fmtRuntime } from '../lib/util';
+import { links } from '../lib/meta';
+import LogPlay from '../components/LogPlay';
 import { t, tv, ti, L, getLang } from '../lib/i18n';
 
 export default function ItemDetail({ id, onClose }: { id: string; onClose: () => void }) {
@@ -21,6 +23,8 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
   const [editing, setEditing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [translating, setTranslating] = useState(false);
+  const [logging, setLogging] = useState(false);
+  const [lending, setLending] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
 
   if (!item) return null;
@@ -119,13 +123,35 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
       </div>
 
       <div className="grid2 mt12">
-        <button className="btn accent" onClick={markPlayed}><Check size={18} /> {isGame ? t('On y a joué') : t('Vu')}{item.playCount ? ` (${item.playCount})` : ''}</button>
+        <button className="btn accent" onClick={() => setLogging(true)}><Check size={18} /> {isGame ? t('On y a joué') : t('Vu')}{item.playCount ? ` (${item.playCount})` : ''}</button>
         {isGame ? (
           <button className="btn" onClick={() => nav.push({ t: 'tool', tool: 'score' })}><Play size={18} /> {t('Feuille de score')}</button>
         ) : (
           <button className="btn" onClick={() => updateItem(item.id, { status: wish ? 'owned' : 'watchlist' })}><Heart size={18} /> {wish ? t('Je l’ai') : t('À voir')}</button>
         )}
       </div>
+
+      {item.lentTo ? (
+        <div className="card row mt12" style={{ borderColor: 'color-mix(in srgb, var(--c-suggest) 50%, transparent)' }}>
+          <Handshake size={20} color="var(--c-suggest)" />
+          <div className="grow small"><b>{t('Prêté à {name}', { name: item.lentTo })}</b>{item.lentAt ? <div className="dim tiny">{t('depuis le {d}', { d: new Date(item.lentAt).toLocaleDateString(getLang() === 'en' ? 'en-CA' : 'fr-CA', { day: 'numeric', month: 'long' }) })}</div> : null}</div>
+          <button className="btn sm" onClick={() => updateItem(item.id, { lentTo: null, lentAt: null } as any).then(() => toast(t('Retour enregistré')))}>{t('Il est revenu')}</button>
+        </div>
+      ) : (
+        <button className="btn sm mt12" onClick={() => setLending(true)}><Handshake size={15} /> {t('Prêter à quelqu’un')}</button>
+      )}
+
+      {item.whereToWatch && (
+        <p className="small mt12 row gap6"><Radio size={15} color={accent} /> {t('Diffusé sur')} <b>{item.whereToWatch}</b></p>
+      )}
+
+      <div className="scroll-x mt12">
+        {links(item).map((l) => (
+          <a key={l.url} className="chip" href={l.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>{l.icon} {l.label} <ExternalLink size={12} /></a>
+        ))}
+      </div>
+
+      <History item={item} />
 
       {/* Qui aimerait ? */}
       {profiles.length > 0 && (
@@ -183,7 +209,44 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
       </div>
 
       {editing && <EditItem item={item} onClose={() => setEditing(false)} />}
+      {logging && <LogPlay item={item} onClose={() => setLogging(false)} />}
+      {lending && <LendSheet onClose={() => setLending(false)} onSave={(name) => updateItem(item.id, { lentTo: name, lentAt: Date.now() }).then(() => { setLending(false); toast(t('Prêt noté')); })} />}
     </Sheet>
+  );
+}
+
+function LendSheet({ onClose, onSave }: { onClose: () => void; onSave: (name: string) => void }) {
+  const [name, setName] = useState('');
+  return (
+    <Sheet title={t('Prêter à quelqu’un')} onClose={onClose} accent="var(--c-suggest)">
+      <input className="input" autoFocus placeholder={t('Nom de la personne')} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name.trim())} />
+      <button className="btn primary block mt12" disabled={!name.trim()} onClick={() => onSave(name.trim())}>{t('Enregistrer')}</button>
+    </Sheet>
+  );
+}
+
+function History({ item }: { item: Item }) {
+  const { plays, profiles, deletePlay } = useStore();
+  const mine = plays.filter((p) => p.itemId === item.id).slice(0, 6);
+  if (!mine.length) return null;
+  const nameOf = (id: string) => profiles.find((p) => p.id === id)?.name || id;
+  return (
+    <div className="card mt20">
+      <h3>{item.kind === 'game' ? t('Dernières parties') : t('Visionnements')}</h3>
+      <div className="col mt12" style={{ gap: 10 }}>
+        {mine.map((p) => (
+          <div key={p.id} className="row small" style={{ alignItems: 'flex-start' }}>
+            <span className="dim tiny" style={{ width: 70, flexShrink: 0, paddingTop: 2 }}>{new Date(p.date).toLocaleDateString(getLang() === 'en' ? 'en-CA' : 'fr-CA', { day: 'numeric', month: 'short' })}</span>
+            <div className="grow">
+              {p.winners.length > 0 && <div><Trophy size={13} color="var(--c-suggest)" style={{ verticalAlign: -2 }} /> <b>{p.winners.map(nameOf).join(', ')}</b></div>}
+              <div className="muted">{p.players.map((x) => `${nameOf(x)}${p.scores?.[x] != null ? ` (${p.scores[x]})` : ''}`).join(' · ')}</div>
+              {p.notes && <div className="dim tiny">{p.notes}</div>}
+            </div>
+            <button className="dim tiny" onClick={() => deletePlay(p.id)}>✕</button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

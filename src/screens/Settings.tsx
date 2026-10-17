@@ -78,6 +78,11 @@ export default function Settings({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="card col">
+          <h3>🆓 {t('Infos gratuites sans clé')}</h3>
+          <p className="small muted">{t('Affiches et infos des séries (TVmaze) et des films/jeux (Wikipédia) sont ajoutées automatiquement, sans clé. TMDB est optionnel pour les notes et la distribution exactes.')}</p>
+        </div>
+
+        <div className="card col">
           <h3>🎬 TMDB ({t('optionnel')})</h3>
           <p className="small muted">{t('Ajoute les vraies affiches, la distribution exacte et la note des films et séries. Clé gratuite sur themoviedb.org (Paramètres → API).')}</p>
           <a className="small row gap4" href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">{t('Obtenir une clé')} <ExternalLink size={13} /></a>

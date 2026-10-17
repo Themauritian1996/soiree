@@ -4,7 +4,7 @@ import {
   doc, getDoc, setDoc, updateDoc, onSnapshot, collection, deleteDoc, writeBatch, arrayUnion,
 } from 'firebase/firestore';
 import { db, firebaseEnabled, watchUser, signOut as fbSignOut } from './firebase';
-import type { Household, Item, Profile, Settings } from './types';
+import type { Household, Item, Play, Profile, Settings } from './types';
 import { lsGet, lsSet, stripUndefined, uid } from './util';
 import { PROFILE_COLORS, PROFILE_EMOJIS } from './vocab';
 import { t } from './i18n';
@@ -28,6 +28,7 @@ interface Ctx {
   user: User | null;
   household: Household;
   items: Item[];
+  plays: Play[];
   profiles: Profile[];
   settings: Settings;
   activeId: string | null;
@@ -40,6 +41,8 @@ interface Ctx {
   addItems: (items: Item[]) => Promise<void>;
   updateItem: (id: string, patch: Partial<Item>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
+  addPlay: (p: Play) => Promise<void>;
+  deletePlay: (id: string) => Promise<void>;
   saveProfile: (p: Profile) => Promise<void>;
   deleteProfile: (id: string) => Promise<void>;
   rate: (profileId: string, itemId: string, n: number) => Promise<void>;
@@ -54,6 +57,7 @@ export const useStore = () => useContext(StoreCtx);
 
 const LS_H = 'soiree.household';
 const LS_I = 'soiree.items';
+const LS_P = 'soiree.plays';
 const LS_MODE = 'soiree.mode';
 const LS_ACTIVE = 'soiree.active';
 
@@ -62,6 +66,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [household, setHousehold] = useState<Household>(() => lsGet(LS_H, emptyHousehold()));
   const [items, setItems] = useState<Item[]>(() => lsGet(LS_I, [] as Item[]));
+  const [plays, setPlays] = useState<Play[]>(() => lsGet(LS_P, [] as Play[]));
   const [activeId, setActiveId] = useState<string | null>(() => lsGet(LS_ACTIVE, null as string | null));
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +94,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const fdb = db;
     let unsubH = () => {};
     let unsubI = () => {};
+    let unsubP = () => {};
     let cancelled = false;
     (async () => {
       try {
@@ -128,12 +134,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           setItems(arr);
           lsSet(LS_I, arr);
         }, (e) => setError(e.message));
+        unsubP = onSnapshot(collection(fdb, 'households', finalHid, 'plays'), (s) => {
+          const arr = s.docs.map((d) => ({ ...(d.data() as Play), id: d.id })).sort((a, b) => b.date - a.date);
+          setPlays(arr);
+          lsSet(LS_P, arr);
+        }, () => { /* journal optionnel */ });
       } catch (e: any) {
         setError(e?.message || String(e));
         setSyncing(false);
       }
     })();
-    return () => { cancelled = true; unsubH(); unsubI(); };
+    return () => { cancelled = true; unsubH(); unsubI(); unsubP(); };
   }, [mode, user]);
 
   // ---------- Profil actif ----------
@@ -184,6 +195,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (isCloud()) {
       await setDoc(doc(db!, 'households', hRef.current.id, 'items', id), stripUndefined(patch), { merge: true });
     }
+  }, []);
+
+  const addPlay = useCallback(async (p: Play) => {
+    setPlays((prev) => { const next = [p, ...prev.filter((x) => x.id !== p.id)].sort((a, b) => b.date - a.date); lsSet(LS_P, next); return next; });
+    if (isCloud()) await setDoc(doc(db!, 'households', hRef.current.id, 'plays', p.id), stripUndefined(p));
+  }, []);
+
+  const deletePlay = useCallback(async (id: string) => {
+    setPlays((prev) => { const next = prev.filter((x) => x.id !== id); lsSet(LS_P, next); return next; });
+    if (isCloud()) await deleteDoc(doc(db!, 'households', hRef.current.id, 'plays', id));
   }, []);
 
   const deleteItem = useCallback(async (id: string) => {
@@ -250,7 +271,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (modeRef.current === 'cloud') {
       await fbSignOut();
       // on garde une copie locale hors-ligne mais on repart d'un foyer local vide
-      localStorage.removeItem(LS_H); localStorage.removeItem(LS_I);
+      localStorage.removeItem(LS_H); localStorage.removeItem(LS_I); localStorage.removeItem(LS_P); setPlays([]);
       setHousehold(emptyHousehold()); setItems([]);
     }
     setMode('signedOut');
@@ -261,10 +282,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<Ctx>(() => ({
     mode, user, household, items, profiles: household.profiles, settings: household.settings,
     activeId, active: household.profiles.find((p) => p.id === activeId) || null, syncing, error,
+    plays, addPlay, deletePlay,
     setActive, useLocal, signOut, addItems, updateItem, deleteItem, saveProfile, deleteProfile, rate,
     updateSettings, renameHousehold, joinHousehold, importData,
   }), [mode, user, household, items, activeId, syncing, error, setActive, useLocal, signOut, addItems, updateItem,
-    deleteItem, saveProfile, deleteProfile, rate, updateSettings, renameHousehold, joinHousehold, importData]);
+    deleteItem, saveProfile, deleteProfile, rate, updateSettings, renameHousehold, joinHousehold, importData, plays, addPlay, deletePlay]);
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
