@@ -1,0 +1,12 @@
+{
+  "appId": "ca.chris.soiree",
+  "appName": "Soirée",
+  "webDir": "dist",
+  "backgroundColor": "#0B0B10",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["google.com"]
+    }
+  }
+}

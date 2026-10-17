@@ -1,0 +1,106 @@
+name: APK + site web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+      VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Dépendances
+        run: npm ci
+
+      - name: Site web (Vite)
+        run: npm run build
+
+      - name: Projet Android (Capacitor)
+        run: |
+          npx cap add android
+          npx --yes @capacitor/assets@3 generate --android --iconBackgroundColor '#0B0B10' --splashBackgroundColor '#0B0B10' || echo "Icônes par défaut"
+          # Connexion Google native
+          sed -i '/^ext {/a\    rgcfaIncludeGoogle = true' android/variables.gradle
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+          else
+            echo "::warning::GOOGLE_SERVICES_JSON_BASE64 absent : la connexion Google ne marchera pas dans l'APK (courriel OK)."
+          fi
+          npx cap sync android
+
+      - name: Compilation APK
+        run: |
+          cd android
+          chmod +x gradlew
+          if [ -n "$KEYSTORE_BASE64" ]; then ./gradlew assembleRelease --no-daemon; else ./gradlew assembleDebug --no-daemon; fi
+
+      - name: Signature
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+            echo "$KEYSTORE_BASE64" | base64 -d > release.p12
+            $BT/zipalign -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+            $BT/apksigner sign --ks release.p12 --ks-type PKCS12 --ks-key-alias soiree \
+              --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD --out Soiree.apk aligned.apk
+            rm release.p12
+          else
+            echo "::warning::KEYSTORE_BASE64 absent : APK de debug (non adapté à la connexion Google)."
+            cp android/app/build/outputs/apk/debug/app-debug.apk Soiree.apk
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Soiree-apk
+          path: Soiree.apk
+
+      - name: Publication (Releases)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: Soirée v1.${{ github.run_number }}
+          files: Soiree.apk
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  pages:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

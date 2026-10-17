@@ -1,0 +1,182 @@
+import type { Item, Profile } from './types';
+import { newProfile } from './store';
+
+const now = Date.now();
+let n = 0;
+const g = (p: Partial<Item>): Item => ({ id: `demo-${++n}`, kind: 'game', status: 'owned', addedAt: now - n * 3600e3, enriched: true, format: 'Boîte', ...p } as Item);
+const m = (p: Partial<Item>): Item => ({ id: `demo-${++n}`, kind: 'movie', status: 'owned', addedAt: now - n * 3600e3, enriched: true, format: 'Blu-ray', ...p } as Item);
+const s = (p: Partial<Item>): Item => ({ id: `demo-${++n}`, kind: 'series', status: 'owned', addedAt: now - n * 3600e3, enriched: true, format: 'DVD', ...p } as Item);
+
+export function demoItems(): Item[] {
+  n = 0;
+  return withEnglish([
+    g({ title: 'Catan', year: 1995, designer: 'Klaus Teuber', minPlayers: 3, maxPlayers: 4, bestPlayers: '4', minTime: 60, maxTime: 120, minAge: 10, weight: 2.3,
+      categories: ['Stratégie', 'Enchères', 'Dés'], mechanics: ['Échange', 'Construction de routes', 'Production par dés'],
+      summary: "Colonisez une île en récoltant bois, argile, blé, laine et minerai. Négociez sans relâche avec vos voisins pour bâtir routes, colonies et villes.",
+      rules: { goal: 'Être le premier à atteindre 10 points de victoire.',
+        setup: ['Assembler l’île avec les tuiles hexagonales et placer les jetons numérotés.', 'Chaque joueur pose 2 colonies et 2 routes (ordre aller-retour).', 'Recevoir les ressources adjacentes à la 2e colonie.'],
+        turn: ['Lancer 2 dés : chaque tuile du numéro produit pour les colonies voisines (2 pour une ville).', 'Sur un 7 : défausse si plus de 7 cartes, puis déplacer le voleur et voler une carte.', 'Échanger avec les autres joueurs ou avec la banque (4 pour 1, ou mieux avec un port).', 'Construire : route, colonie, ville ou carte développement.'],
+        end: 'Dès qu’un joueur atteint 10 points à son tour, il gagne. Colonie = 1 pt, ville = 2 pts, plus longue route et plus grande armée = 2 pts chacune.',
+        tips: ['Visez la variété de ressources et les numéros 6 et 8.', 'Un port 2:1 sur votre ressource forte change la partie.', 'Ne négligez pas le minerai et le blé pour les villes.'] },
+      funFacts: ['Klaus Teuber était prothésiste dentaire quand il a créé le jeu.', 'Il a remporté le Spiel des Jahres en 1995.', 'Le jeu a été vendu à des dizaines de millions d’exemplaires dans le monde.'] }),
+    g({ title: 'Azul', year: 2017, designer: 'Michael Kiesling', minPlayers: 2, maxPlayers: 4, bestPlayers: '2', minTime: 30, maxTime: 45, minAge: 8, weight: 1.8,
+      categories: ['Puzzle', 'Abstrait', 'Famille'], mechanics: ['Draft de tuiles', 'Reconnaissance de motifs'],
+      summary: 'Décorez le palais royal d’Évora avec de magnifiques carreaux de céramique. Simple à apprendre, redoutablement tactique.',
+      rules: { goal: 'Avoir le plus de points après la fin de la manche où une ligne horizontale du mur est complétée.',
+        setup: ['Placer les fabriques au centre (5 à 2 joueurs, 7 à 3, 9 à 4) et y déposer 4 tuiles chacune.', 'Chacun prend un plateau personnel ; le premier joueur prend le jeton 1.'],
+        turn: ['Prendre toutes les tuiles d’une même couleur d’une fabrique (le reste va au centre) ou du centre.', 'Les placer sur une seule ligne de motif ; l’excédent tombe dans le plancher (pénalités).', 'Quand tout est pris : chaque ligne complète envoie une tuile au mur et marque des points selon les tuiles adjacentes.'],
+        end: 'Bonus : 2 pts par ligne complète, 7 par colonne, 10 par couleur complète.',
+        tips: ['Surveillez ce que les autres ne peuvent PAS prendre pour leur forcer des pénalités.', 'Le centre de la table peut devenir un piège en fin de manche.'] },
+      funFacts: ['Le jeu s’inspire des azulejos, les carreaux de faïence portugais.', 'Spiel des Jahres 2018.'] }),
+    g({ title: 'Nom de code', originalTitle: 'Codenames', year: 2015, designer: 'Vlaada Chvátil', minPlayers: 4, maxPlayers: 8, bestPlayers: '6', minTime: 15, maxTime: 20, minAge: 12, weight: 1.3,
+      categories: ['Party', 'Mots', 'Déduction'], mechanics: ['Équipes', 'Association d’idées'],
+      summary: 'Deux maîtres-espions font deviner les agents de leur équipe avec un seul mot… sans tomber sur l’assassin.',
+      rules: { goal: 'Faire deviner tous les agents de son équipe avant l’autre équipe.',
+        setup: ['Disposer 25 cartes-mots en grille 5×5.', 'Former deux équipes ; chacune choisit un maître-espion qui voit la carte-clé.'],
+        turn: ['Le maître-espion donne UN mot et UN chiffre (ex. « Océan 2 »).', 'Son équipe touche des cartes une à une ; elle peut continuer tant qu’elle trouve ses agents (chiffre + 1 essai max).', 'Un mauvais choix termine le tour ; l’assassin fait perdre immédiatement.'],
+        end: 'La première équipe à découvrir tous ses agents gagne.', tips: ['Mieux vaut un indice sûr pour 2 qu’un pari risqué pour 4.'] },
+      funFacts: ['Spiel des Jahres 2016.', 'Il existe des versions illustrées, Disney et même une version pour deux joueurs (Duo).'] }),
+    g({ title: 'Wingspan', year: 2019, designer: 'Elizabeth Hargrave', minPlayers: 1, maxPlayers: 5, bestPlayers: '3', minTime: 40, maxTime: 70, minAge: 10, weight: 2.4,
+      categories: ['Stratégie', 'Cartes'], mechanics: ['Moteur de jeu', 'Gestion de main', 'Collection'],
+      summary: 'Attirez des oiseaux dans votre réserve naturelle et faites fonctionner un moteur de combos de plus en plus puissant.',
+      rules: { goal: 'Marquer le plus de points en 4 manches (oiseaux, bonus, œufs, nourriture, cartes glissées).',
+        setup: ['Chaque joueur reçoit 5 cartes oiseaux, 5 jetons nourriture et 2 cartes bonus ; il garde une combinaison oiseaux/nourriture totalisant 5.'],
+        turn: ['Une action par cube : jouer un oiseau, prendre de la nourriture (forêt), pondre des œufs (prairie) ou piocher des cartes (zone humide).', 'Chaque oiseau dans la rangée activée déclenche son pouvoir brun de droite à gauche.'],
+        end: 'Après 4 manches (8, 7, 6 puis 5 actions), on compte les points.', tips: ['Les objectifs de fin de manche valent souvent plus qu’on pense.'] },
+      funFacts: ['Plus de 170 oiseaux différents, chacun illustré et décrit avec de vraies données.', 'Kennerspiel des Jahres 2019.', 'Elizabeth Hargrave est passionnée d’ornithologie.'] }),
+    g({ title: '7 Wonders Duel', year: 2015, designer: 'Antoine Bauza, Bruno Cathala', minPlayers: 2, maxPlayers: 2, bestPlayers: '2', minTime: 30, maxTime: 30, minAge: 10, weight: 2.2,
+      categories: ['Duel', 'Cartes', 'Stratégie'], mechanics: ['Draft ouvert', 'Construction de civilisation'],
+      summary: 'Le meilleur jeu à deux pour bâtir une civilisation en trois âges : sciences, armée ou prestige.',
+      rules: { goal: 'Gagner par suprématie militaire, scientifique, ou aux points à la fin du 3e âge.',
+        setup: ['Chacun reçoit 7 pièces et choisit 4 merveilles par draft.', 'Disposer les 20 cartes de l’âge I selon le schéma (certaines faces cachées).'],
+        turn: ['Prendre une carte accessible et : la construire, la défausser pour des pièces, ou l’utiliser pour bâtir une merveille.'],
+        end: 'Victoire immédiate militaire ou scientifique (6 symboles différents) ; sinon le plus de points.', tips: ['Gardez un œil sur la piste militaire, elle peut finir la partie d’un coup.'] },
+      funFacts: ['Adaptation à deux du grand 7 Wonders.', 'Le jeu a reçu de nombreux prix internationaux.'] }),
+    g({ title: 'Dixit', year: 2008, designer: 'Jean-Louis Roubira', minPlayers: 3, maxPlayers: 8, bestPlayers: '6', minTime: 30, maxTime: 30, minAge: 8, weight: 1.2,
+      categories: ['Ambiance', 'Party', 'Famille'], mechanics: ['Narration', 'Vote'],
+      summary: 'Des cartes oniriques, un indice poétique et beaucoup d’imagination : ni trop clair, ni trop flou !',
+      rules: { goal: 'Avancer le plus loin sur la piste de score.',
+        setup: ['Chacun reçoit 6 cartes et des jetons de vote.'],
+        turn: ['Le conteur choisit une carte et donne un indice (mot, phrase, son…).', 'Les autres proposent secrètement une carte de leur main qui colle à l’indice.', 'On mélange, on révèle et chacun vote pour la carte du conteur.', 'Si tous ou personne trouvent, le conteur marque 0 et les autres 2 ; sinon le conteur et ceux qui ont trouvé marquent 3.'],
+        end: 'La partie se termine quand la pioche est vide ou qu’un joueur atteint 30.', tips: ['L’indice parfait est trouvé par au moins une personne… mais pas par tous.'] },
+      funFacts: ['Son auteur est pédopsychiatre.', 'Spiel des Jahres 2010.'] }),
+    g({ title: 'Pandémie', originalTitle: 'Pandemic', year: 2008, designer: 'Matt Leacock', minPlayers: 2, maxPlayers: 4, bestPlayers: '4', minTime: 45, maxTime: 45, minAge: 8, weight: 2.4,
+      categories: ['Coopératif', 'Stratégie'], mechanics: ['Rôles', 'Gestion de main'],
+      summary: 'Équipe de spécialistes contre quatre maladies qui se propagent sur la planète. On gagne ou on perd ensemble.',
+      rules: { goal: 'Découvrir les remèdes des 4 maladies avant la fin des cartes, 8 éclosions ou l’épuisement des cubes.',
+        setup: ['Infecter 9 villes (3-2-1 cubes).', 'Distribuer les rôles et les cartes ; insérer les cartes Épidémie selon la difficulté.'],
+        turn: ['Faire 4 actions (se déplacer, soigner, construire une station, partager, découvrir un remède).', 'Piocher 2 cartes Joueur (attention aux épidémies).', 'Infecter des villes selon le taux d’infection.'],
+        end: 'Victoire collective dès que les 4 remèdes sont découverts.', tips: ['Parlez-vous ! Le jeu se gagne en planifiant à l’avance les rôles de chacun.'] },
+      funFacts: ['Il a popularisé les jeux coopératifs modernes.', 'La version « Legacy » transforme le jeu au fil d’une campagne.'] }),
+    g({ title: 'Les Aventuriers du Rail', originalTitle: 'Ticket to Ride', year: 2004, designer: 'Alan R. Moon', minPlayers: 2, maxPlayers: 5, bestPlayers: '4', minTime: 30, maxTime: 60, minAge: 8, weight: 1.8,
+      categories: ['Famille', 'Cartes'], mechanics: ['Collection de couleurs', 'Routes'],
+      summary: 'Reliez les villes d’Amérique du Nord en train et accomplissez vos destinations secrètes.',
+      rules: { goal: 'Marquer le plus de points avec les routes, les destinations et le plus long chemin.',
+        setup: ['Chacun prend 45 wagons et 4 cartes Wagon, puis garde au moins 2 des 3 destinations piochées.', '5 cartes Wagon face visible.'],
+        turn: ['Au choix : piocher 2 cartes Wagon, OU prendre une route en défaussant les cartes de la bonne couleur, OU piocher de nouvelles destinations.'],
+        end: 'Quand un joueur a 2 wagons ou moins, tout le monde joue un dernier tour. Les destinations non réalisées font perdre des points.', tips: ['Prenez tôt les routes critiques entre deux grandes villes.'] },
+      funFacts: ['Spiel des Jahres 2004.', 'Il en existe des dizaines de cartes : Europe, Pays-Bas, Japon, même Paris et New York.'] }),
+    g({ title: 'Skull', year: 2011, designer: 'Hervé Marly', minPlayers: 3, maxPlayers: 6, bestPlayers: '5', minTime: 15, maxTime: 45, minAge: 10, weight: 1.1,
+      categories: ['Ambiance', 'Cartes'], mechanics: ['Bluff', 'Enchères'],
+      summary: 'Des fleurs, un crâne, et beaucoup de regards suspicieux. Le bluff à l’état pur.',
+      rules: { goal: 'Réussir deux défis.',
+        setup: ['Chacun a 3 disques fleurs et 1 disque crâne.'],
+        turn: ['Chacun pose un disque face cachée, puis on ajoute ou on lance un défi.', 'Le défi : annoncer combien de fleurs on retournera ; les autres surenchérissent ou passent.', 'Le plus offrant retourne d’abord TOUTES ses piles, puis celles des autres.'],
+        end: 'Tomber sur un crâne fait perdre un disque ; deux défis réussis = victoire.', tips: ['Poser son crâne puis défier est le bluff le plus classique.'] },
+      funFacts: ['Il s’appelait d’abord « Skull & Roses ».', 'Une partie s’apprend en 2 minutes.'] }),
+    g({ title: 'The Crew', year: 2019, designer: 'Thomas Sing', minPlayers: 2, maxPlayers: 5, bestPlayers: '4', minTime: 20, maxTime: 20, minAge: 10, weight: 2.0,
+      categories: ['Coopératif', 'Cartes'], mechanics: ['Levées', 'Communication limitée'],
+      summary: 'Un jeu de levées coopératif en mission spatiale : 50 missions de plus en plus corsées.',
+      rules: { goal: 'Accomplir la mission : chaque tâche doit être remportée par le bon joueur.',
+        setup: ['Distribuer toutes les cartes ; celui qui a la fusée 4 est commandant.', 'Répartir les tâches de la mission.'],
+        turn: ['Jouer une carte en suivant la couleur demandée si possible ; la plus haute gagne la levée, les fusées sont atout.', 'Une seule communication par joueur et par mission, avec un jeton.'],
+        end: 'Mission réussie quand toutes les tâches sont accomplies ; échec si une tâche va au mauvais joueur.', tips: ['Communiquez votre carte la plus révélatrice, pas la plus forte.'] },
+      funFacts: ['Kennerspiel des Jahres 2020.', 'Une suite, « Mission Deep Sea », est sortie en 2021.'] }),
+    g({ title: 'Terraforming Mars', year: 2016, designer: 'Jacob Fryxelius', minPlayers: 1, maxPlayers: 5, bestPlayers: '3', minTime: 120, maxTime: 150, minAge: 12, weight: 3.3,
+      categories: ['Stratégie', 'Cartes'], mechanics: ['Moteur de jeu', 'Pose de tuiles'],
+      summary: 'Des corporations rivales rendent Mars habitable : température, oxygène et océans.', status: 'wishlist',
+      funFacts: ['Créé par FryxGames, une petite maison suédoise fondée par une fratrie.'] }),
+
+    m({ title: 'Inception', year: 2010, director: 'Christopher Nolan', runtime: 148, minAge: 13, genres: ['Science-fiction', 'Thriller', 'Action'], moods: ['Intense', 'Réflexion'],
+      cast: ['Leonardo DiCaprio', 'Joseph Gordon-Levitt', 'Elliot Page', 'Tom Hardy', 'Marion Cotillard', 'Cillian Murphy'],
+      summary: 'Un voleur spécialisé dans l’extraction de secrets à l’intérieur des rêves reçoit une mission inverse : implanter une idée.',
+      funFacts: ['Le couloir qui tourne a été construit pour de vrai sur un énorme décor rotatif.', 'La musique de Hans Zimmer s’inspire de « Non, je ne regrette rien » ralentie.'] }),
+    m({ title: 'Le Fabuleux Destin d’Amélie Poulain', year: 2001, director: 'Jean-Pierre Jeunet', runtime: 122, genres: ['Comédie', 'Romance'], moods: ['Feel-good', 'Léger', 'Cocooning'],
+      cast: ['Audrey Tautou', 'Mathieu Kassovitz', 'Rufus', 'Yolande Moreau'], format: 'DVD',
+      summary: 'Une serveuse de Montmartre décide de changer, discrètement, la vie des gens qui l’entourent.',
+      funFacts: ['Le Café des Deux Moulins existe vraiment à Montmartre.', 'Le rôle avait d’abord été pensé pour une actrice anglaise.'] }),
+    m({ title: 'Le Seigneur des anneaux : La Communauté de l’anneau', year: 2001, director: 'Peter Jackson', runtime: 178, genres: ['Fantastique', 'Aventure'], moods: ['Épique'],
+      cast: ['Elijah Wood', 'Ian McKellen', 'Viggo Mortensen', 'Sean Astin', 'Orlando Bloom', 'Cate Blanchett'],
+      summary: 'Un jeune hobbit hérite d’un anneau maléfique et part, avec une compagnie hétéroclite, pour le détruire.',
+      funFacts: ['Les trois films ont été tournés d’affilée en Nouvelle-Zélande.', 'Viggo Mortensen a remplacé l’acteur initial quelques jours après le début du tournage.'] }),
+    m({ title: 'Incendies', year: 2010, director: 'Denis Villeneuve', runtime: 131, genres: ['Drame'], moods: ['Émouvant', 'Intense', 'Réflexion'],
+      cast: ['Lubna Azabal', 'Mélissa Désormeaux-Poulin', 'Maxim Gaudette', 'Rémy Girard'], format: 'DVD',
+      summary: 'À la mort de leur mère, des jumeaux québécois partent au Moyen-Orient à la recherche d’un père et d’un frère inconnus.',
+      funFacts: ['Adapté de la pièce de Wajdi Mouawad.', 'Finaliste aux Oscars pour le meilleur film en langue étrangère.'] }),
+    m({ title: 'Le Voyage de Chihiro', year: 2001, director: 'Hayao Miyazaki', runtime: 125, genres: ['Animation', 'Fantastique', 'Familial'], moods: ['Émouvant', 'Épique'],
+      cast: ['Rumi Hiiragi', 'Miyu Irino', 'Mari Natsuki'],
+      summary: 'Une fillette se retrouve piégée dans un monde d’esprits et doit travailler dans des bains pour sauver ses parents.',
+      funFacts: ['Premier film d’animation japonais à remporter l’Oscar du meilleur film d’animation.', 'Il a longtemps été le plus grand succès au box-office japonais.'] }),
+    m({ title: 'Mad Max : La Route du chaos', originalTitle: 'Mad Max: Fury Road', year: 2015, director: 'George Miller', runtime: 120, genres: ['Action', 'Science-fiction'], moods: ['Intense', 'Épique'],
+      cast: ['Tom Hardy', 'Charlize Theron', 'Nicholas Hoult'], format: '4K',
+      summary: 'Dans un désert post-apocalyptique, une impératrice rebelle et un vagabond fuient un tyran à bord d’un camion de guerre.',
+      funFacts: ['Le film a remporté 6 Oscars, surtout techniques.', 'La majorité des cascades ont été réalisées pour de vrai, dans le désert namibien.'] }),
+
+    s({ title: 'Breaking Bad', year: 2008, director: 'Vince Gilligan', seasons: 5, runtime: 47, minAge: 16, genres: ['Drame', 'Policier', 'Thriller'], moods: ['Intense'],
+      cast: ['Bryan Cranston', 'Aaron Paul', 'Anna Gunn', 'Dean Norris', 'Bob Odenkirk'],
+      summary: 'Un professeur de chimie apprend qu’il est gravement malade et bascule dans la fabrication de drogue.',
+      funFacts: ['Le personnage de Jesse devait à l’origine disparaître dès la 1re saison.', 'La série dérivée « Better Call Saul » suit l’avocat Saul Goodman.'] }),
+    s({ title: 'The Office', year: 2005, director: 'Greg Daniels', seasons: 9, runtime: 22, genres: ['Comédie'], moods: ['Léger', 'Feel-good', 'Cocooning'],
+      cast: ['Steve Carell', 'Rainn Wilson', 'John Krasinski', 'Jenna Fischer'],
+      summary: 'Le quotidien gênant et hilarant des employés d’un bureau de vente de papier en Pennsylvanie, filmé comme un documentaire.',
+      funFacts: ['Adaptation de la série britannique de Ricky Gervais.', 'Beaucoup de répliques cultes ont été improvisées.'] }),
+    s({ title: 'Stranger Things', year: 2016, director: 'Matt et Ross Duffer', seasons: 5, runtime: 55, genres: ['Science-fiction', 'Horreur', 'Drame'], moods: ['Frissons', 'Épique'],
+      cast: ['Millie Bobby Brown', 'Winona Ryder', 'David Harbour', 'Finn Wolfhard'], format: 'Streaming',
+      summary: 'Dans une petite ville des années 80, la disparition d’un garçon révèle des expériences secrètes et un monde parallèle.',
+      funFacts: ['Le projet a été refusé par plusieurs chaînes avant Netflix.', 'Le titre de travail était « Montauk ».'] }),
+    s({ title: 'Arcane', year: 2021, director: 'Christian Linke, Alex Yee', seasons: 2, runtime: 40, genres: ['Animation', 'Fantastique', 'Action'], moods: ['Intense', 'Émouvant'],
+      cast: ['Hailee Steinfeld', 'Ella Purnell', 'Kevin Alejandro'], format: 'Streaming', status: 'watchlist',
+      summary: 'Deux sœurs se retrouvent dans des camps opposés entre une cité prospère et ses bas-fonds.',
+      funFacts: ['Animée par le studio français Fortiche.', 'Première série de streaming à remporter l’Emmy du meilleur programme d’animation.'] }),
+  ]);
+}
+
+export function demoProfiles(): Profile[] {
+  const a = newProfile('Chris', 0);
+  a.prefs = { game: { Stratégie: 2, Coopératif: 1, Duel: 1, Party: -1 }, media: { 'Science-fiction': 2, Action: 1, Thriller: 1, Romance: -1 }, moods: { Intense: 1, Épique: 1 }, weight: 3, maxTime: 120 };
+  const b = newProfile('Conjointe', 1);
+  b.prefs = { game: { Ambiance: 2, Party: 1, Famille: 1, Puzzle: 1, Stratégie: -1 }, media: { Comédie: 2, Romance: 1, Drame: 1, Horreur: -2 }, moods: { 'Feel-good': 2, Cocooning: 1 }, weight: 1.8, maxTime: 60 };
+  return [a, b];
+}
+
+// Versions anglaises (titres, résumés, fun facts) de la démo
+const DEMO_EN: Record<string, { title?: string; summary: string; funFacts: string[] }> = {
+  Catan: { summary: 'Settle an island by gathering wood, brick, grain, wool and ore. Trade relentlessly with your neighbours to build roads, settlements and cities.', funFacts: ['Klaus Teuber was a dental technician when he designed the game.', 'It won the Spiel des Jahres in 1995.', 'Tens of millions of copies have been sold worldwide.'] },
+  Azul: { summary: 'Decorate the royal palace of Évora with beautiful ceramic tiles. Easy to learn, surprisingly cutthroat.', funFacts: ['Inspired by azulejos, the Portuguese glazed tiles.', 'Spiel des Jahres 2018.'] },
+  'Nom de code': { title: 'Codenames', summary: 'Two spymasters guide their teams with one-word clues… without hitting the assassin.', funFacts: ['Spiel des Jahres 2016.', 'There are picture, Disney and even two-player (Duet) versions.'] },
+  Wingspan: { summary: 'Attract birds to your wildlife preserve and build an engine of combos that grows stronger every round.', funFacts: ['Over 170 different birds, each illustrated with real data.', 'Kennerspiel des Jahres 2019.', 'Elizabeth Hargrave is a passionate birder.'] },
+  '7 Wonders Duel': { summary: 'The best two-player civilization game: science, military or prestige across three ages.', funFacts: ['A two-player adaptation of 7 Wonders.', 'It has won many international awards.'] },
+  Dixit: { summary: 'Dreamlike cards, a poetic clue and lots of imagination: not too obvious, not too vague!', funFacts: ['Its designer is a child psychiatrist.', 'Spiel des Jahres 2010.'] },
+  'Pandémie': { title: 'Pandemic', summary: 'A team of specialists against four diseases spreading across the planet. You win or lose together.', funFacts: ['It popularized modern cooperative games.', 'The Legacy version changes the game over a campaign.'] },
+  'Les Aventuriers du Rail': { title: 'Ticket to Ride', summary: 'Connect North American cities by train and complete your secret destination tickets.', funFacts: ['Spiel des Jahres 2004.', 'There are dozens of maps: Europe, Japan, even Paris and New York.'] },
+  Skull: { summary: 'Flowers, a skull, and lots of suspicious looks. Pure bluffing.', funFacts: ['It was first called “Skull & Roses”.', 'You can learn it in two minutes.'] },
+  'The Crew': { summary: 'A cooperative trick-taking game set on a space mission: 50 increasingly tricky missions.', funFacts: ['Kennerspiel des Jahres 2020.', 'A sequel, “Mission Deep Sea”, came out in 2021.'] },
+  'Terraforming Mars': { summary: 'Rival corporations make Mars habitable: temperature, oxygen and oceans.', funFacts: ['Made by FryxGames, a small Swedish publisher founded by siblings.'] },
+  Inception: { summary: 'A thief who steals secrets from inside dreams is offered the reverse job: planting an idea.', funFacts: ['The rotating hallway was a real set built on a giant rotating rig.', 'Hans Zimmer’s score is built from a slowed-down “Non, je ne regrette rien”.'] },
+  'Le Fabuleux Destin d’Amélie Poulain': { title: 'Amélie', summary: 'A Montmartre waitress decides to quietly change the lives of the people around her.', funFacts: ['The Café des Deux Moulins really exists in Montmartre.', 'The role was first written for an English actress.'] },
+  'Le Seigneur des anneaux : La Communauté de l’anneau': { title: 'The Lord of the Rings: The Fellowship of the Ring', summary: 'A young hobbit inherits an evil ring and sets out with an unlikely fellowship to destroy it.', funFacts: ['All three films were shot back to back in New Zealand.', 'Viggo Mortensen replaced the original actor a few days into the shoot.'] },
+  Incendies: { summary: 'After their mother’s death, Québec twins travel to the Middle East to find a father and a brother they never knew.', funFacts: ['Adapted from Wajdi Mouawad’s play.', 'Nominated for the Oscar for Best Foreign Language Film.'] },
+  'Le Voyage de Chihiro': { title: 'Spirited Away', summary: 'A girl gets trapped in a world of spirits and must work in a bathhouse to save her parents.', funFacts: ['The first Japanese animated film to win the Oscar for Best Animated Feature.', 'It was long the highest-grossing film in Japan.'] },
+  'Mad Max : La Route du chaos': { title: 'Mad Max: Fury Road', summary: 'In a post-apocalyptic desert, a rebel empress and a drifter flee a tyrant aboard a war rig.', funFacts: ['The film won 6 Oscars, mostly technical.', 'Most stunts were done for real, in the Namibian desert.'] },
+  'Breaking Bad': { summary: 'A chemistry teacher learns he is seriously ill and slides into making drugs.', funFacts: ['Jesse was originally meant to be written out in season 1.', 'The spin-off “Better Call Saul” follows lawyer Saul Goodman.'] },
+  'The Office': { summary: 'The awkward, hilarious daily life of employees at a Pennsylvania paper company, filmed like a documentary.', funFacts: ['An adaptation of Ricky Gervais’s British series.', 'Many iconic lines were improvised.'] },
+  'Stranger Things': { summary: 'In a small 1980s town, a boy’s disappearance uncovers secret experiments and a parallel world.', funFacts: ['Several networks turned the project down before Netflix.', 'Its working title was “Montauk”.'] },
+  Arcane: { summary: 'Two sisters end up on opposite sides between a thriving city and its underbelly.', funFacts: ['Animated by the French studio Fortiche.', 'The first streaming series to win the Emmy for Outstanding Animated Program.'] },
+};
+
+function withEnglish(list: Item[]): Item[] {
+  return list.map((it) => {
+    const en = DEMO_EN[it.title];
+    return en ? { ...it, loc: { en: { title: en.title || it.title, summary: en.summary, funFacts: en.funFacts } } } : it;
+  });
+}

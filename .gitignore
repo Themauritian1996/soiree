@@ -1,0 +1,8 @@
+node_modules
+dist
+dist-preview
+android
+.env
+*.keystore
+*.p12
+keystore-*.txt

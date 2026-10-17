@@ -1,0 +1,134 @@
+import { useEffect, useRef, useState } from 'react';
+import { Home as HomeIcon, Library as LibIcon, Sparkles, Dices, Users, Loader2 } from 'lucide-react';
+import { useStore } from './lib/store';
+import { useNav, type Tab } from './lib/nav';
+import { enrich, NoKeyError } from './lib/gemini';
+import { tmdbLookup } from './lib/tmdb';
+import { sleep } from './lib/util';
+import Login from './screens/Login';
+import Home from './screens/Home';
+import Library from './screens/Library';
+import ItemDetail from './screens/ItemDetail';
+import Scan from './screens/Scan';
+import AddManual from './screens/AddManual';
+import Suggest from './screens/Suggest';
+import Party from './screens/Party';
+import Blend from './screens/Blend';
+import Tools, { ToolScreen } from './screens/Tools';
+import Profiles, { ProfileEditor } from './screens/Profiles';
+import Settings from './screens/Settings';
+import { Spinner } from './components/ui';
+import { t } from './lib/i18n';
+
+const TABS: { id: Tab; label: string; icon: any; c: string }[] = [
+  { id: 'home', label: 'Accueil', icon: HomeIcon, c: 'var(--tx)' },
+  { id: 'library', label: 'Collection', icon: LibIcon, c: 'var(--c-game)' },
+  { id: 'suggest', label: 'Suggestions', icon: Sparkles, c: 'var(--c-suggest)' },
+  { id: 'tools', label: 'Outils', icon: Dices, c: 'var(--c-tools)' },
+  { id: 'profiles', label: 'Profils', icon: Users, c: 'var(--c-profile)' },
+];
+
+export default function App() {
+  const { mode } = useStore();
+  const nav = useNav();
+
+  // Bouton « retour » Android : ferme la feuille ouverte, sinon revient à l'accueil
+  const navRef = useRef(nav);
+  navRef.current = nav;
+  useEffect(() => {
+    let remove: (() => void) | undefined;
+    (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (!Capacitor.isNativePlatform()) return;
+        const { App: CapApp } = await import('@capacitor/app');
+        const h = await CapApp.addListener('backButton', () => {
+          const n = navRef.current;
+          if (n.stack.length) n.pop();
+          else if (n.tab !== 'home') n.setTab('home');
+          else CapApp.minimizeApp();
+        });
+        remove = () => h.remove();
+      } catch { /* web */ }
+    })();
+    return () => remove?.();
+  }, []);
+
+  if (mode === 'loading') return <div style={{ height: '100%', display: 'grid', placeItems: 'center' }}><Spinner size={30} /></div>;
+  if (mode === 'signedOut') return <Login />;
+
+  return (
+    <div className="app">
+      {nav.tab === 'home' && <Home />}
+      {nav.tab === 'library' && <Library />}
+      {nav.tab === 'suggest' && <Suggest />}
+      {nav.tab === 'tools' && <Tools />}
+      {nav.tab === 'profiles' && <Profiles />}
+
+      <nav className="nav">
+        {TABS.map((tab) => (
+          <button key={tab.id} className={nav.tab === tab.id ? 'on' : ''} style={{ '--c': tab.c } as any} onClick={() => nav.setTab(tab.id)}>
+            <tab.icon size={21} strokeWidth={nav.tab === tab.id ? 2.4 : 1.9} />
+            {t(tab.label)}
+          </button>
+        ))}
+      </nav>
+
+      {nav.stack.map((r, i) => {
+        const key = `${i}-${r.t}`;
+        const close = nav.pop;
+        switch (r.t) {
+          case 'item': return <ItemDetail key={key} id={r.id} onClose={close} />;
+          case 'scan': return <Scan key={key} kind={r.kind} onClose={close} />;
+          case 'add': return <AddManual key={key} kind={r.kind} onClose={close} />;
+          case 'profile': return <ProfileEditor key={key} id={r.id} onClose={close} />;
+          case 'settings': return <Settings key={key} onClose={close} />;
+          case 'party': return <Party key={key} initialKind={r.kind} onClose={close} />;
+          case 'blend': return <Blend key={key} initialKind={r.kind} onClose={close} />;
+          case 'tool': return <ToolScreen key={key} tool={r.tool} players={r.players} onClose={close} />;
+        }
+      })}
+      <Enricher />
+    </div>
+  );
+}
+
+/** File d'attente : complète automatiquement les fiches ajoutées (IA + TMDB). */
+function Enricher() {
+  const { items, settings, updateItem } = useStore();
+  const busy = useRef(false);
+  const [current, setCurrent] = useState<string | null>(null);
+  const pending = items.filter((i) => !i.enriched && !i.enrichError);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  useEffect(() => {
+    if (busy.current || !pending.length || !settings.geminiKey) return;
+    busy.current = true;
+    (async () => {
+      const it = pending[0];
+      setCurrent(it.title);
+      try {
+        const r = await enrich(settingsRef.current, it.kind, it.title, it.year ? `(${it.year})` : '');
+        let t = null;
+        try { t = await tmdbLookup(settingsRef.current, it.kind, r.originalTitle || r.title || it.title, r.year); } catch { /* TMDB optionnel */ }
+        await updateItem(it.id, { ...r, ...(t || {}), title: r.title || it.title, image: t?.image || it.image });
+      } catch (e: any) {
+        if (!(e instanceof NoKeyError)) await updateItem(it.id, { enrichError: e?.message || t('Erreur') });
+      }
+      await sleep(350);
+      setCurrent(null);
+      busy.current = false;
+    })();
+  }, [pending.length, settings.geminiKey, current]);
+
+  if (!current) return null;
+  return (
+    <div style={{ position: 'fixed', top: 'calc(var(--safe-t) + 10px)', right: 12, zIndex: 50 }}>
+      <div className="row gap6 small" style={{ background: 'var(--s3)', border: '1px solid var(--line2)', borderRadius: 99, padding: '6px 12px 6px 9px', maxWidth: 260 }}>
+        <Loader2 size={15} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
+        <span className="ellipsis">{t('Fiche :')} {current}{pending.length > 1 ? ` (+${pending.length - 1})` : ''}</span>
+      </div>
+    </div>
+  );
+}
