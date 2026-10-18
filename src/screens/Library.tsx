@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Search, LayoutGrid, Rows3, Plus, Camera, Type, Users, Clock, Brain, Calendar, Star } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Search, Library as LibIcon, Grid3x3, Rows3, Plus, Camera, Type, Users, Clock, Brain, Calendar, Star, X } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { useNav } from '../lib/nav';
 import { Cover, Empty, Seg, Sheet } from '../components/ui';
@@ -8,11 +8,14 @@ import { GAME_CATEGORIES, KIND_META, MEDIA_GENRES } from '../lib/vocab';
 import { fmtPlayers, fmtRuntime, fmtTime, gradFor, hash, norm } from '../lib/util';
 import { profileScore } from '../lib/scoring';
 import { t, tp, ti, tv, getLang } from '../lib/i18n';
+import { cachedColor, inkFor } from '../lib/color';
+import PhotoPeek from '../components/PhotoPeek';
+import { lsGet, lsSet } from '../lib/util';
 
-type View = 'shelf' | 'list';
+type View = 'shelf' | 'wall' | 'list';
 const GAME_GROUPS = { type: 'Type', players: 'Joueurs', time: 'Durée', weight: 'Complexité', alpha: 'A → Z' } as const; // clés traduites à l'affichage
 const MEDIA_GROUPS = { genre: 'Genre', decade: 'Décennie', mood: 'Ambiance', format: 'Format', alpha: 'A → Z' } as const;
-type Group = keyof typeof GAME_GROUPS | keyof typeof MEDIA_GROUPS;
+type Group = keyof typeof GAME_GROUPS | keyof typeof MEDIA_GROUPS | 'none';
 
 const tag = (k: string) => `${emojiFor(k)} ${tv(k)}`;
 const emojiFor = (k: string) => GAME_CATEGORIES.find((c) => c.key === k)?.emoji || MEDIA_GENRES.find((g) => g.key === k)?.emoji || '';
@@ -40,6 +43,7 @@ function groupItems(items: Item[], g: Group): { label: string; items: Item[] }[]
       case 'decade': add(it.year ? `${Math.floor(it.year / 10) * 10}s` : `❔ ${t('Année inconnue')}`, it); break;
       case 'format': add(it.format ? tv(it.format) : t('Sans format'), it); break;
       case 'alpha': add(norm(ti(it))[0]?.toUpperCase() || '#', it); break;
+      case 'none': add('', it); break;
     }
   }
   const order = (s: string) => (s.startsWith('❔') ? 'zzz' : s);
@@ -51,8 +55,11 @@ export default function Library() {
   const { items, active } = useStore();
   const nav = useNav();
   const kind = nav.libKind;
-  const [view, setView] = useState<View>('shelf');
-  const [group, setGroup] = useState<Record<Kind, Group>>({ game: 'type', movie: 'genre', series: 'genre' });
+  const [view, setViewS] = useState<View>(() => lsGet<View>('soiree.libview', 'shelf'));
+  const setView = (v: View) => { setViewS(v); lsSet('soiree.libview', v); };
+  const [group, setGroupS] = useState<Record<Kind, Group>>(() => lsGet('soiree.libgroup', { game: 'type', movie: 'genre', series: 'genre' } as Record<Kind, Group>));
+  const setGroup = (g: Record<Kind, Group>) => { setGroupS(g); lsSet('soiree.libgroup', g); };
+  const [peek, setPeek] = useState<Item | null>(null);
   const [status, setStatus] = useState<'all' | 'owned' | 'wish' | 'lent'>('all');
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<'recent' | 'alpha' | 'match' | 'time' | 'year'>('alpha');
@@ -82,8 +89,9 @@ export default function Library() {
       <div className="top">
         <div><h1>{t('Collection')}</h1><div className="sub">{list.length} {KIND_META[kind].label.toLowerCase()}</div></div>
         <div className="seg" style={{ padding: 3 }}>
-          <button className={view === 'shelf' ? 'on' : ''} style={{ width: 44 }} onClick={() => setView('shelf')} aria-label={t('Étagère')}><LayoutGrid size={18} /></button>
-          <button className={view === 'list' ? 'on' : ''} style={{ width: 44 }} onClick={() => setView('list')} aria-label={t('Inventaire')}><Rows3 size={18} /></button>
+          <button className={view === 'shelf' ? 'on' : ''} style={{ width: 42 }} onClick={() => setView('shelf')} aria-label={t('Étagère')}><LibIcon size={18} /></button>
+          <button className={view === 'wall' ? 'on' : ''} style={{ width: 42 }} onClick={() => setView('wall')} aria-label={t('Mur de photos')}><Grid3x3 size={18} /></button>
+          <button className={view === 'list' ? 'on' : ''} style={{ width: 42 }} onClick={() => setView('list')} aria-label={t('Inventaire')}><Rows3 size={18} /></button>
         </div>
       </div>
 
@@ -92,18 +100,21 @@ export default function Library() {
       <div className="search mt12"><Search size={18} /><input className="input" placeholder={kind === 'game' ? t('Titre, auteur, type…') : t('Titre, acteur, réalisateur…')} value={q} onChange={(e) => setQ(e.target.value)} /></div>
 
       <div className="scroll-x mt12">
+        {(status !== 'all' || q) && (
+          <button className="chip" onClick={() => { setStatus('all'); setQ(''); }}><X size={13} /> {t('Effacer')}</button>
+        )}
         {(['all', 'owned', 'wish', 'lent'] as const).map((s) => (
-          <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+          <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(status === s ? 'all' : s)}>
             {s === 'all' ? t('Tout') : s === 'owned' ? t('À la maison') : s === 'lent' ? `🤝 ${t('Prêtés')}` : kind === 'game' ? t('Liste de souhaits') : t('À voir')}
           </button>
         ))}
         <span style={{ width: 1, background: 'var(--line)', margin: '4px 2px' }} />
-        {view === 'shelf'
+        {view !== 'list'
           ? Object.entries(groupOpts).map(([k, label]) => (
-            <button key={k} className={`chip ${group[kind] === k ? 'on' : ''}`} onClick={() => setGroup({ ...group, [kind]: k as Group })}>{t(label)}</button>
+            <button key={k} className={`chip ${group[kind] === k ? 'on' : ''}`} onClick={() => setGroup({ ...group, [kind]: (group[kind] === k ? 'none' : k) as Group })}>{t(label)}{group[kind] === k && <X size={13} />}</button>
           ))
           : ([['alpha', 'A → Z', Type], ['recent', 'Récents', Calendar], ['match', 'Pour moi', Star], ['time', 'Durée', Clock], ['year', 'Année', Calendar]] as const).map(([k, label, I]) => (
-            <button key={k} className={`chip ${sort === k ? 'on' : ''}`} onClick={() => setSort(k)}><I size={14} />{t(label)}</button>
+            <button key={k} className={`chip ${sort === k ? 'on' : ''}`} onClick={() => setSort(sort === k && k !== 'alpha' ? 'alpha' : k)}><I size={14} />{t(label)}</button>
           ))}
       </div>
 
@@ -113,7 +124,18 @@ export default function Library() {
             {!q && t('Ajoute des titres en photo ou à la main avec le bouton +.')}
           </Empty>
         ) : view === 'shelf' ? (
-          groups.map((g) => <ShelfRow key={g.label} label={g.label} items={g.items} />)
+          <div className="cubbies">
+            {groups.map((g) => <Cubby key={g.label} label={g.label} items={g.items} onPick={setPeek} />)}
+          </div>
+        ) : view === 'wall' ? (
+          groups.map((g) => (
+            <div key={g.label} style={{ marginBottom: 22 }}>
+              {g.label && <div className="shelf-label"><h3>{g.label}</h3><span className="count">{g.items.length}</span></div>}
+              <div className={`wall ${kind === 'game' ? '' : 'posters'}`}>
+                {g.items.map((it) => <WallTile key={it.id} item={it} onPick={setPeek} />)}
+              </div>
+            </div>
+          ))
         ) : (
           <div className="col" style={{ gap: 8 }}>
             {sorted.map((it) => <InventoryRow key={it.id} item={it} />)}
@@ -122,6 +144,8 @@ export default function Library() {
       </div>
 
       <button className="fab" onClick={() => setAddMenu(true)}><Plus size={22} /> {t('Ajouter')}</button>
+
+      {peek && <PhotoPeek item={items.find((i) => i.id === peek.id) || peek} onClose={() => setPeek(null)} />}
 
       {addMenu && (
         <Sheet title={`${t('Ajouter')} — ${KIND_META[kind].label}`} onClose={() => setAddMenu(false)} accent={accent}>
@@ -141,37 +165,63 @@ export default function Library() {
   );
 }
 
-function ShelfRow({ label, items }: { label: string; items: Item[] }) {
-  const nav = useNav();
+/** Un casier façon « Kallax » : les boîtes sont empilées à plat, titre lisible sur la tranche. */
+function Cubby({ label, items, onPick }: { label: string; items: Item[]; onPick: (i: Item) => void }) {
   return (
-    <div className="shelf-group">
-      <div className="shelf-label"><h3>{label}</h3><span className="count">{items.length}</span></div>
-      <div className="shelf">
-        {items.map((it) => {
-          const h = 140 + (hash(it.id) % 36);
-          const wish = it.status === 'wishlist' || it.status === 'watchlist';
-          if (it.image) {
-            return (
-              <button key={it.id} className={`box-face ${it.kind !== 'game' ? 'dvd' : ''}`} style={{ height: it.kind === 'game' ? 112 + (hash(it.id) % 30) : 124, opacity: wish ? 0.55 : 1 }}
-                onClick={() => nav.push({ t: 'item', id: it.id })} title={ti(it)}>
-                <img src={it.image} alt={it.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-                {wish && <span className="badge">{t('Souhait')}</span>}
-              </button>
-            );
-          }
-          const [a, b] = gradFor(it.title);
-          const w = it.kind === 'game' ? 36 + Math.min(26, Math.round((it.weight || 2) * 6)) : 30;
-          return (
-            <button key={it.id} className="spine" title={ti(it)} onClick={() => nav.push({ t: 'item', id: it.id })}
-              style={{ height: it.kind === 'game' ? h : 150, width: w, background: `linear-gradient(90deg, ${a}, ${b})`, opacity: wish ? 0.5 : 1 }}>
-              <span>{ti(it)}</span>
-              <i>{it.kind === 'game' ? (it.categories?.[0] ? emojiFor(it.categories[0]) : '🎲') : it.kind === 'movie' ? '🎬' : '📺'}</i>
-            </button>
-          );
-        })}
+    <section className="cubby-wrap">
+      {label && <div className="shelf-label"><h3>{label}</h3><span className="count">{items.length}</span></div>}
+      <div className="cubby">
+        <div className="stack">
+          {items.map((it, i) => <Spine key={it.id} item={it} i={i} onPick={onPick} />)}
+        </div>
       </div>
-      <div className="shelf-board" />
-    </div>
+    </section>
+  );
+}
+
+function useItemColor(item: Item) {
+  const [c, setC] = useState<string | null>(() => cachedColor(item.id, item.image));
+  useEffect(() => { setC(cachedColor(item.id, item.image, setC)); }, [item.id, item.image]);
+  return c;
+}
+
+function Spine({ item, i, onPick }: { item: Item; i: number; onPick: (i: Item) => void }) {
+  const col = useItemColor(item);
+  const [a, b] = gradFor(item.title);
+  const bg = col || a;
+  const ink = inkFor(bg);
+  const isGame = item.kind === 'game';
+  const thick = isGame ? 46 + Math.round(Math.min(5, item.weight || 2) * 4) : 40;
+  const wish = item.status === 'wishlist' || item.status === 'watchlist';
+  const h = hash(item.id);
+  const meta = isGame
+    ? [item.maxPlayers ? `${item.minPlayers && item.minPlayers !== item.maxPlayers ? `${item.minPlayers}–` : ''}${item.maxPlayers} j.` : '', item.maxTime || item.minTime ? `${item.maxTime || item.minTime}′` : ''].filter(Boolean).join(' · ')
+    : [item.year, item.kind === 'series' && item.seasons ? `${item.seasons}S` : item.runtime ? fmtRuntime(item.runtime) : ''].filter(Boolean).join(' · ');
+  return (
+    <button className={`spine2 ${wish ? 'wish' : ''} ${item.lentTo ? 'lent' : ''}`} onClick={() => onPick(item)} title={ti(item)}
+      style={{
+        height: thick, color: ink,
+        width: `${isGame ? 90 + (h % 11) : 94 + (h % 7)}%`,
+        marginLeft: `${(h >> 3) % (isGame ? 9 : 5)}%`,
+        background: col ? `linear-gradient(180deg, color-mix(in srgb, ${bg} 82%, white) 0%, ${bg} 18%, ${bg} 80%, color-mix(in srgb, ${bg} 70%, black) 100%)` : `linear-gradient(90deg, ${a}, ${b})`,
+        animationDelay: `${Math.min(i, 12) * 25}ms`,
+      }}>
+      {item.image ? <img className="spine-thumb" src={item.image} alt="" loading="lazy" /> : <span className="spine-emoji">{KIND_META[item.kind].emoji}</span>}
+      <span className="spine-title">{ti(item)}</span>
+      {meta && <span className="spine-meta">{meta}</span>}
+      {item.lentTo && <span className="spine-flag">🤝</span>}
+    </button>
+  );
+}
+
+function WallTile({ item, onPick }: { item: Item; onPick: (i: Item) => void }) {
+  const wish = item.status === 'wishlist' || item.status === 'watchlist';
+  return (
+    <button className={`tile ${wish ? 'wish' : ''}`} onClick={() => onPick(item)}>
+      <Cover item={item} className="tile-cover" />
+      {item.image && <span className="tile-title">{ti(item)}</span>}
+      {item.lentTo && <span className="badge" style={{ left: 'auto', right: 6 }}>🤝</span>}
+    </button>
   );
 }
 

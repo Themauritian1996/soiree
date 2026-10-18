@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Home as HomeIcon, Library as LibIcon, Sparkles, Dices, Users, Loader2 } from 'lucide-react';
 import { useStore } from './lib/store';
 import { useNav, type Tab } from './lib/nav';
-import { enrich, NoKeyError } from './lib/gemini';
+import { enrich, NoKeyError, onGeminiStatus } from './lib/gemini';
 import { tmdbLookup } from './lib/tmdb';
 import { freeLookup } from './lib/meta';
 import type { Item } from './lib/types';
@@ -91,6 +91,21 @@ export default function App() {
         }
       })}
       <Enricher />
+      <GeminiStatus />
+    </div>
+  );
+}
+
+/** Petit bandeau quand Gemini est surchargé et qu'on bascule de modèle. */
+function GeminiStatus() {
+  const [msg, setMsg] = useState('');
+  useEffect(() => { onGeminiStatus(setMsg); return () => onGeminiStatus(null); }, []);
+  if (!msg) return null;
+  return (
+    <div style={{ position: 'fixed', bottom: 'calc(var(--safe-b) + 96px)', left: '50%', transform: 'translateX(-50%)', zIndex: 90 }}>
+      <div className="row gap6 small" style={{ background: 'var(--s3)', border: '1px solid var(--line2)', borderRadius: 99, padding: '7px 14px', whiteSpace: 'nowrap' }}>
+        <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> {msg}
+      </div>
     </div>
   );
 }

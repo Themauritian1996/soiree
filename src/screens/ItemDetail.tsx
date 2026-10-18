@@ -25,6 +25,7 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
   const [translating, setTranslating] = useState(false);
   const [logging, setLogging] = useState(false);
   const [lending, setLending] = useState(false);
+  const [viewPhoto, setViewPhoto] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
 
   if (!item) return null;
@@ -82,7 +83,9 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
         </div>
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={(e) => onPhoto(e.target.files?.[0])} />
         <div className="row" style={{ alignItems: 'flex-end', gap: 16 }}>
-          <Cover item={item} style={{ width: isGame ? 120 : 104, boxShadow: '0 16px 30px -10px rgba(0,0,0,.7)' }} />
+          <button onClick={() => item.image ? setViewPhoto(true) : photoRef.current?.click()} aria-label={t('Photo')} style={{ flexShrink: 0 }}>
+            <Cover item={item} style={{ width: isGame ? 120 : 104, boxShadow: '0 16px 30px -10px rgba(0,0,0,.7)' }} />
+          </button>
           <div className="grow" style={{ minWidth: 0 }}>
             <span className="eyebrow" style={{ color: accent }}>{KIND_META[item.kind].single}{wish ? ` · ${t('souhait')}` : ''}</span>
             <h1 style={{ fontSize: 25, marginTop: 4 }}>{lx.title}</h1>
@@ -210,6 +213,12 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
 
       {editing && <EditItem item={item} onClose={() => setEditing(false)} />}
       {logging && <LogPlay item={item} onClose={() => setLogging(false)} />}
+      {viewPhoto && item.image && (
+        <div className="peek" onClick={() => setViewPhoto(false)} style={{ alignItems: 'center' }}>
+          <div className="peek-bg" style={{ backgroundImage: `url(${item.image})` }} />
+          <img src={item.image} alt={lx.title} style={{ position: 'relative', maxWidth: '94vw', maxHeight: '86vh', borderRadius: 14, objectFit: 'contain', boxShadow: '0 24px 60px rgba(0,0,0,.8)' }} />
+        </div>
+      )}
       {lending && <LendSheet onClose={() => setLending(false)} onSave={(name) => updateItem(item.id, { lentTo: name, lentAt: Date.now() }).then(() => { setLending(false); toast(t('Prêt noté')); })} />}
     </Sheet>
   );

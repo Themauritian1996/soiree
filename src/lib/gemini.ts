@@ -20,47 +20,79 @@ const langName = (l: Lang = getLang()) => (l === 'en' ? 'English (casual, North 
 
 type Part = { text: string } | { inline_data: { mime_type: string; data: string } };
 
+// Chaîne de repli : si un modèle est surchargé (503) ou limité (429), on passe au suivant
+// au lieu d'échouer. Le premier qui répond est mémorisé pour les appels suivants.
+const FALLBACKS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite'];
+let preferred: string | null = null;
+const noThinkingCfg = new Set<string>();
+export let lastModelUsed = '';
+type Status = (msg: string) => void;
+let statusListener: Status | null = null;
+export const onGeminiStatus = (fn: Status | null) => { statusListener = fn; };
+
+function thinkingFor(model: string) {
+  // Réponses plus rapides : peu ou pas de « réflexion » pour les modèles Flash
+  if (noThinkingCfg.has(model) || /pro/.test(model)) return undefined;
+  if (/2\.5/.test(model)) return { thinkingBudget: 0 };
+  return { thinkingLevel: 'low' };
+}
+
 async function call(settings: Settings, parts: Part[], opts: { json?: boolean; temperature?: number } = {}): Promise<string> {
   const key = settings.geminiKey?.trim();
   if (!key) throw new NoKeyError();
-  const model = settings.geminiModel || DEFAULT_MODEL;
-  const body = {
-    contents: [{ role: 'user', parts }],
-    generationConfig: {
-      temperature: opts.temperature ?? 0.4,
-      ...(opts.json !== false ? { responseMimeType: 'application/json' } : {}),
-    },
-  };
+  const chosen = settings.geminiModel || DEFAULT_MODEL;
+  const chain = [...new Set([preferred || chosen, chosen, ...FALLBACKS])];
   let lastErr: any;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify(body),
-      });
-      if (res.status === 429 || res.status >= 500) {
-        lastErr = new Error(res.status === 429 ? t('Limite de requêtes Gemini atteinte — réessaie dans une minute.') : t('Gemini indisponible ({n})', { n: res.status }));
-        await sleep(1500 * (attempt + 1));
-        continue;
+  for (let mi = 0; mi < chain.length; mi++) {
+    const model = chain[mi];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const tc = thinkingFor(model);
+      const body = {
+        contents: [{ role: 'user', parts }],
+        generationConfig: {
+          temperature: opts.temperature ?? 0.4,
+          ...(opts.json !== false ? { responseMimeType: 'application/json' } : {}),
+          ...(tc ? { thinkingConfig: tc } : {}),
+        },
+      };
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 90000);
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: 'POST', signal: ctrl.signal,
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify(body),
+        }).finally(() => clearTimeout(timer));
+        if (res.status === 503 || res.status === 500 || res.status === 429) {
+          lastErr = new Error(res.status === 429 ? t('Limite de requêtes Gemini atteinte — réessaie dans une minute.') : t('Gemini indisponible ({n})', { n: res.status }));
+          statusListener?.(t('Gemini est occupé, essai avec un autre modèle…'));
+          if (attempt === 0 && res.status !== 429) { await sleep(1200); continue; }
+          break; // modèle suivant
+        }
+        const data = await res.json();
+        if (!res.ok) {
+          const msg: string = data?.error?.message || `Error ${res.status}`;
+          if (/API key not valid|API_KEY_INVALID/i.test(msg)) throw new FatalError(t('Clé Gemini invalide (Réglages).'));
+          if (tc && /thinking/i.test(msg)) { noThinkingCfg.add(model); continue; }
+          if (/not found|is not supported|no longer available/i.test(msg)) { lastErr = new Error(msg); break; }
+          throw new Error(msg);
+        }
+        const cand = data?.candidates?.[0];
+        const text = (cand?.content?.parts || []).filter((p: any) => !p.thought).map((p: any) => p.text || '').join('');
+        if (!text) throw new FatalError(cand?.finishReason === 'SAFETY' ? t('Réponse bloquée par le filtre Gemini.') : t('Réponse vide de Gemini.'));
+        preferred = model;
+        lastModelUsed = model;
+        statusListener?.('');
+        return text;
+      } catch (e: any) {
+        lastErr = e;
+        if (e instanceof NoKeyError || e instanceof FatalError) throw e;
+        if (e?.name === 'AbortError') { lastErr = new Error(t('Gemini ne répond pas (délai dépassé).')); break; }
+        await sleep(700);
       }
-      const data = await res.json();
-      if (!res.ok) {
-        const msg = data?.error?.message || `Error ${res.status}`;
-        if (/API key not valid|API_KEY_INVALID/i.test(msg)) throw new FatalError(t('Clé Gemini invalide (Réglages).'));
-        if (/not found|is not supported/i.test(msg)) throw new FatalError(t('Modèle « {m} » indisponible — choisis-en un autre dans Réglages.', { m: model }));
-        throw new Error(msg);
-      }
-      const cand = data?.candidates?.[0];
-      const text = (cand?.content?.parts || []).filter((p: any) => !p.thought).map((p: any) => p.text || '').join('');
-      if (!text) throw new FatalError(cand?.finishReason === 'SAFETY' ? t('Réponse bloquée par le filtre Gemini.') : t('Réponse vide de Gemini.'));
-      return text;
-    } catch (e: any) {
-      lastErr = e;
-      if (e instanceof NoKeyError || e instanceof FatalError) throw e;
-      await sleep(800 * (attempt + 1));
     }
   }
+  statusListener?.('');
   throw lastErr || new Error(t('Échec Gemini'));
 }
 class FatalError extends Error {}

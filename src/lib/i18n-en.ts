@@ -1,6 +1,9 @@
 // Traductions anglaises. Clé = texte français exact utilisé dans t('…').
 export const EN: Record<string, string> = {
   // Général / erreurs
+  'Gemini est occupé, essai avec un autre modèle…': 'Gemini is busy, trying another model…',
+  'Gemini ne répond pas (délai dépassé).': 'Gemini isn’t responding (timeout).',
+  'Mur de photos': 'Photo wall', 'Voir la fiche': 'Open details', 'Ajouter une photo': 'Add a photo',
   // v1.2 — journal, prêts, liens, soirée cinéma
   'Noter une partie': 'Log a game', 'Noter un visionnement': 'Log a viewing', 'Avec qui ?': 'With whom?',
   'Invités (séparés par des virgules)': 'Guests (comma-separated)', 'Qui a gagné ?': 'Who won?', 'Score': 'Score', 'Ma note': 'My rating',

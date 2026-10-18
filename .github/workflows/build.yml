@@ -47,6 +47,25 @@ jobs:
           # Connexion Google native
           sed -i '/^ext {/a\    rgcfaIncludeGoogle = true' android/variables.gradle
           cp android-config/google-services.json android/app/google-services.json
+          # Texte à taille fixe (la taille de police système ne casse pas la mise en page)
+          MA=$(find android/app/src/main/java -name MainActivity.java)
+          cat > "$MA" <<'JAVA'
+          package ca.chris.soiree;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onStart() {
+                  super.onStart();
+                  if (getBridge() != null && getBridge().getWebView() != null) {
+                      getBridge().getWebView().getSettings().setTextZoom(100);
+                  }
+              }
+          }
+          JAVA
+          sed -i 's/^          //' "$MA"
           npx cap sync android
 
       - name: Compilation APK

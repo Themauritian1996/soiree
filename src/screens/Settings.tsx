@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Eye, EyeOff, Download, Upload, ExternalLink, FlaskConical, Moon, Sun, Monitor } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { Seg, Sheet, Spinner, useToast } from '../components/ui';
-import { MODEL_OPTIONS, DEFAULT_MODEL, testKey } from '../lib/gemini';
+import { MODEL_OPTIONS, DEFAULT_MODEL, testKey, lastModelUsed } from '../lib/gemini';
 import { demoItems, demoProfiles } from '../lib/demo';
 import { firebaseEnabled } from '../lib/firebase';
 import { t, useUi, type Theme } from '../lib/i18n';
@@ -25,7 +25,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
   const test = async () => {
     setTesting(true);
-    try { await testKey({ ...settings, geminiKey: gk.trim() }); toast(t('Clé Gemini fonctionnelle ✅')); await save(); }
+    try { await testKey({ ...settings, geminiKey: gk.trim() }); toast(`${t('Clé Gemini fonctionnelle ✅')} (${lastModelUsed})`); await save(); }
     catch (e: any) { toast(e.message, true); } finally { setTesting(false); }
   };
 
