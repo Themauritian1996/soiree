@@ -103,7 +103,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
           <button className="btn sm" onClick={async () => { await importData({ items: demoItems(), profiles: profiles.length ? undefined : demoProfiles() }); toast(t('Démo ajoutée')); }}>{t('Ajouter la collection de démo')}</button>
           <p className="tiny dim">{items.length} {t('titres')} · {profiles.length} {t('profils')} · {mode === 'cloud' ? t('synchronisé avec Firebase') : firebaseEnabled ? t('local (non connecté)') : t('local (Firebase non configuré)')}</p>
         </div>
-        <p className="tiny dim center">Soirée v1.5</p>
+        <p className="tiny dim center">Soirée v1.6</p>
       </div>
     </Sheet>
   );

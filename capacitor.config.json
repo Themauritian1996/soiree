@@ -1,6 +1,6 @@
 {
   "appId": "ca.chris.soiree",
-  "appName": "Soirée",
+  "appName": "Soir\u00e9e",
   "webDir": "dist",
   "backgroundColor": "#0B0B10",
   "plugins": {
@@ -17,7 +17,7 @@
     },
     "Keyboard": {
       "resize": "none",
-      "resizeOnFullScreen": true
+      "resizeOnFullScreen": false
     }
   },
   "android": {

@@ -52,16 +52,33 @@ jobs:
           cat > "$MA" <<'JAVA'
           package ca.chris.soiree;
 
-          import android.os.Bundle;
+          import android.view.ViewGroup;
+          import android.webkit.WebView;
+          import androidx.core.graphics.Insets;
+          import androidx.core.view.ViewCompat;
+          import androidx.core.view.WindowInsetsCompat;
           import com.getcapacitor.BridgeActivity;
 
           public class MainActivity extends BridgeActivity {
               @Override
               public void onStart() {
                   super.onStart();
-                  if (getBridge() != null && getBridge().getWebView() != null) {
-                      getBridge().getWebView().getSettings().setTextZoom(100);
-                  }
+                  if (getBridge() == null || getBridge().getWebView() == null) return;
+                  WebView wv = getBridge().getWebView();
+                  wv.getSettings().setTextZoom(100);
+                  // Comme une app native : la vue s'arrete pile au-dessus du clavier (ou de la barre systeme).
+                  ViewCompat.setOnApplyWindowInsetsListener(wv, (v, wi) -> {
+                      Insets bars = wi.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                      Insets ime = wi.getInsets(WindowInsetsCompat.Type.ime());
+                      ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                      mlp.leftMargin = bars.left;
+                      mlp.rightMargin = bars.right;
+                      mlp.topMargin = bars.top;
+                      mlp.bottomMargin = Math.max(bars.bottom, ime.bottom);
+                      v.setLayoutParams(mlp);
+                      return WindowInsetsCompat.CONSUMED;
+                  });
+                  ViewCompat.requestApplyInsets(wv);
               }
           }
           JAVA
