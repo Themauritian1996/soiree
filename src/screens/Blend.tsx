@@ -18,13 +18,14 @@ export default function Blend({ initialKind, onClose }: { initialKind?: Kind; on
   const [kind, setKind] = useState<Kind>(initialKind || 'game');
   const [players, setPlayers] = useState(2);
   const [minutes, setMinutes] = useState(0);
+  const [scope, setScope] = useState<'all' | 'wish' | 'have'>('all');
 
   const who = sel.map((id) => profiles.find((p) => p.id === id)!).filter(Boolean);
   const w = (id: string) => weights[id] ?? 50;
   useEffect(() => { setPlayers(Math.max(2, who.length)); }, [sel.length]);
 
-  const ranked = useMemo(() => blend(who.map((p) => ({ p, w: w(p.id) })), items, { kind, players: kind === 'game' ? players : undefined, maxMinutes: minutes || undefined }),
-    [who, weights, items, kind, players, minutes]);
+  const ranked = useMemo(() => blend(who.map((p) => ({ p, w: w(p.id) })), items, { kind, players: kind === 'game' ? players : undefined, maxMinutes: minutes || undefined, scope }),
+    [who, weights, items, kind, players, minutes, scope]);
 
   const toggle = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const two = who.length === 2;
@@ -57,9 +58,9 @@ export default function Blend({ initialKind, onClose }: { initialKind?: Kind; on
             <input className="blend-range" type="range" min={0} max={100} value={pct}
               onChange={(e) => setWeights({ ...weights, [who[0].id]: +e.target.value, [who[1].id]: 100 - +e.target.value })} />
           </div>
-          <div className="row between mt12">
+          <div className="row mt12" style={{ gap: 6 }}>
             {[[100, 0], [70, 30], [50, 50], [30, 70], [0, 100]].map(([a, b]) => (
-              <button key={a} className={`chip static ${pct === a ? 'on' : ''}`} onClick={() => setWeights({ ...weights, [who[0].id]: a, [who[1].id]: b })}>{a}/{b}</button>
+              <button key={a} className={`chip static ${pct === a ? 'on' : ''}`} style={{ flex: 1, minWidth: 0, padding: '0 4px', justifyContent: 'center', fontSize: 13 }} onClick={() => setWeights({ ...weights, [who[0].id]: a, [who[1].id]: b })}>{a}/{b}</button>
             ))}
           </div>
         </div>
@@ -80,6 +81,9 @@ export default function Blend({ initialKind, onClose }: { initialKind?: Kind; on
       )}
 
       <div className="mt20"><Seg value={kind} onChange={setKind} options={(['game', 'movie', 'series'] as Kind[]).map((k) => ({ v: k, label: `${KIND_META[k].emoji} ${KIND_META[k].label}`, c: KIND_META[k].color }))} /></div>
+      <div className="mt12"><Seg value={scope} onChange={setScope} options={kind === 'game'
+        ? [{ v: 'all', label: t('Tous') }, { v: 'have', label: `🎲 ${t('À moi')}` }, { v: 'wish', label: `💭 ${t('Souhaits')}` }]
+        : [{ v: 'all', label: t('Tous') }, { v: 'wish', label: `👀 ${t('À voir')}` }, { v: 'have', label: `✅ ${t('Déjà vus')}` }]} /></div>
       <div className="grid2 mt12">
         {kind === 'game' ? <Stepper value={players} onChange={setPlayers} min={1} max={12} label={t('joueurs')} /> : <div />}
         <select className="input" value={minutes} onChange={(e) => setMinutes(+e.target.value)}>
@@ -131,6 +135,9 @@ export function Results({ ranked, who, kind, context, guestsNote }: {
               <div className="grow" style={{ minWidth: 0 }}>
                 <div className="row gap6"><b className="ellipsis">{i === 0 ? '🏆 ' : ''}{ti(r.item)}</b></div>
                 <div className="meta" style={{ marginTop: 2 }}>
+                  {(r.item.status === 'wishlist' || r.item.status === 'watchlist')
+                    ? <span className="tag-wish">{r.item.kind === 'game' ? t('Souhait') : t('À voir')}</span>
+                    : r.item.kind !== 'game' ? <span className="tag-seen">✓ {t('Vu')}</span> : null}
                   {r.item.kind === 'game'
                     ? <><span><Users size={12} />{r.item.minPlayers === r.item.maxPlayers ? r.item.minPlayers : `${r.item.minPlayers}–${r.item.maxPlayers}`}</span><span><Clock size={12} />{fmtTime(r.item.minTime, r.item.maxTime)}</span></>
                     : <><span>{r.item.year}</span><span><Clock size={12} />{fmtRuntime(r.item.runtime)}</span></>}

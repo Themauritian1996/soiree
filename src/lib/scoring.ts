@@ -52,11 +52,14 @@ export function profileScore(p: Profile, item: Item, items: Item[]) {
 
 export interface Ranked { item: Item; score: number; per: { p: Profile; s: number }[] }
 
-export interface Constraints { players?: number; maxMinutes?: number; kind: Kind; includeWishlist?: boolean; minAge?: number }
+export interface Constraints { players?: number; maxMinutes?: number; kind: Kind; includeWishlist?: boolean; minAge?: number; scope?: 'all' | 'wish' | 'have' }
 
 export function fits(item: Item, c: Constraints) {
   if (item.kind !== c.kind) return false;
-  if (!c.includeWishlist && (item.status === 'wishlist' || item.status === 'watchlist')) return false;
+  const wish = item.status === 'wishlist' || item.status === 'watchlist';
+  if (c.scope === 'wish' && !wish) return false;
+  if (c.scope === 'have' && wish) return false;
+  if (!c.scope && !c.includeWishlist && wish) return false;
   if (c.players && item.kind === 'game') {
     if (item.minPlayers && c.players < item.minPlayers) return false;
     if (item.maxPlayers && c.players > item.maxPlayers) return false;

@@ -107,7 +107,7 @@ export const EN: Record<string, string> = {
   'Tout': 'All', 'À la maison': 'At home', 'Liste de souhaits': 'Wishlist', 'Aucun résultat': 'No results', 'Rien ici pour l’instant': 'Nothing here yet',
   'Ajoute des titres en photo ou à la main avec le bouton +.': 'Add titles by photo or by hand with the + button.',
   'Prendre une photo': 'Take a photo', 'Étagère, piles de boîtes, DVD ou liste écrite — plusieurs titres d’un coup': 'Shelf, stacks of boxes, DVDs or a written list — many titles at once',
-  'Écrire un titre': 'Type a title', 'Ajoute un ou plusieurs titres à la main': 'Add one or more titles by hand', 'Souhait': 'Wishlist',
+  'Écrire un titre': 'Type a title', 'Ajoute un ou plusieurs titres à la main': 'Add one or more titles by hand', 'Tous': 'All', 'À moi': 'Mine', 'Souhaits': 'Wishlist', 'Déjà vus': 'Watched', 'Souhait': 'Wishlist',
   'fiche en préparation…': 'sheet in progress…', 'fiche incomplète': 'incomplete sheet', '{n} saison': '{n} season', '{n} saisons': '{n} seasons',
   'Type': 'Type', 'Joueurs': 'Players', 'Durée': 'Length', 'A → Z': 'A → Z', 'Genre': 'Genre', 'Décennie': 'Decade', 'Ambiance': 'Mood',
   'Récents': 'Recent', 'Pour moi': 'For me',
