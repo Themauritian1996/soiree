@@ -17,7 +17,7 @@ export default function Suggest() {
   const [players, setPlayers] = useState(2);
   const [minutes, setMinutes] = useState(0);
 
-  const ranked = useMemo(() => (active ? blend([{ p: active, w: 100 }], items, { kind, players: kind === 'game' ? players : undefined, maxMinutes: minutes || undefined }) : []),
+  const ranked = useMemo(() => (active ? blend([{ p: active, w: 100 }], items, { kind, players: kind === 'game' ? players : undefined, maxMinutes: minutes || undefined, includeWishlist: true }) : []),
     [active, items, kind, players, minutes]);
 
   return (
@@ -44,8 +44,8 @@ export default function Suggest() {
         </div>
       </div>
       <Seg value={kind} onChange={setKind} options={(['game', 'movie', 'series'] as Kind[]).map((k) => ({ v: k, label: `${KIND_META[k].emoji} ${KIND_META[k].label}`, c: KIND_META[k].color }))} />
-      <div className="grid2 mt12">
-        {kind === 'game' ? <Stepper value={players} onChange={setPlayers} min={1} max={12} label={t('joueurs')} /> : <div />}
+      <div className={kind === 'game' ? 'grid2 mt12' : 'mt12'} style={kind === 'game' ? undefined : { display: 'grid' }}>
+        {kind === 'game' && <Stepper value={players} onChange={setPlayers} min={1} max={12} label={t('joueurs')} />}
         <select className="input" value={minutes} onChange={(e) => setMinutes(+e.target.value)}>
           <option value={0}>{t('Temps : peu importe')}</option>
           {[20, 30, 45, 60, 90, 120, 180].map((m) => <option key={m} value={m}>{t('Max')} {fmtRuntime(m)}</option>)}

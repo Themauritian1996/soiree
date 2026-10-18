@@ -250,19 +250,19 @@ export function profileBrief(p: Profile, items: Item[]) {
 }
 
 export async function aiSuggest(settings: Settings, args: {
-  kind: Kind; who: { p: Profile; w: number }[]; candidates: Item[]; allItems: Item[]; context: string;
+  kind: Kind; who: { p: Profile; w: number }[]; candidates: Item[]; allItems: Item[]; context: string; want?: string;
 }): Promise<AiSuggest> {
   const label = args.kind === 'game' ? 'board game' : args.kind === 'movie' ? 'movie' : 'TV series';
-  const lib = args.candidates.slice(0, 20).map((i) => `- ${L(i).title}${i.year ? ` (${i.year})` : ''}: ${[...(i.categories || []), ...(i.genres || [])].join('/')}`).join('\n');
+  const lib = args.candidates.slice(0, 30).map((i) => `- ${L(i).title}${i.year ? ` (${i.year})` : ''}${i.status === 'wishlist' || i.status === 'watchlist' ? ' [not yet played/watched]' : ''}: ${[...(i.categories || []), ...(i.genres || []), ...(i.moods || [])].join('/')}`).join('\n');
   const owned = args.allItems.filter((i) => i.kind === args.kind).map((i) => L(i).title).join(', ');
   const prompt = `We are choosing the next ${label}. Blend of tastes (weights):
 ${args.who.map(({ p, w }) => `• ${Math.round(w)}% — ${profileBrief(p, args.allItems)}`).join('\n')}
 Context: ${args.context}
-Candidates already at home (ranked by the algorithm):
+${args.want ? `WHAT THEY FEEL LIKE RIGHT NOW (top priority, picks and discoveries must fit it): ${args.want}\n` : ''}Candidates already at home (ranked by the algorithm):
 ${lib || '(none)'}
 Answer in ${langName()}, warm tone, JSON only:
 {"comment":"1-2 sentences about this blend of tastes","picks":[{"title":"EXACT title of a candidate","why":"why, mentioning the people according to their weight"}],"discover":[{"title":"","year":2020,"why":""}]}
-picks = the 3 best candidates from the list. discover = 3 ${label}s to discover that are NOT in: ${owned || '(nothing)'}.`;
+picks = the 3 best candidates from the list${args.want ? ' that fit what they feel like (if none fits well, say so in comment and pick the closest)' : ''}. discover = 3 ${label}s to discover that are NOT in: ${owned || '(nothing)'}.`;
   return parseJSON<AiSuggest>(await call(settings, [{ text: prompt }], { temperature: 0.7 }));
 }
 
