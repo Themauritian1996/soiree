@@ -14,6 +14,10 @@
       "style": "DARK",
       "backgroundColor": "#0B0B10",
       "overlaysWebView": false
+    },
+    "Keyboard": {
+      "resize": "none",
+      "resizeOnFullScreen": true
     }
   },
   "android": {

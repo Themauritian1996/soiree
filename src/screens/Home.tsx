@@ -48,14 +48,14 @@ export default function Home() {
   return (
     <div className="page">
       <div className="top">
-        <button className="row" style={{ gap: 12, textAlign: 'left' }} onClick={() => setSwitcher(true)}>
+        <button className="row grow" style={{ gap: 12, textAlign: 'left', minWidth: 0 }} onClick={() => setSwitcher(true)}>
           {active && <Avatar p={active} size="lg" />}
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div className="sub" style={{ marginTop: 0 }}>{greet()},</div>
-            <h1 style={{ fontSize: 26 }}>{active?.name || t('toi')} <ChevronRight size={18} style={{ verticalAlign: 'middle', opacity: .5 }} /></h1>
+            <h1 className="ellipsis" style={{ fontSize: 24 }}>{active?.name || t('toi')} <ChevronRight size={18} style={{ verticalAlign: 'middle', opacity: .5 }} /></h1>
           </div>
         </button>
-        <div className="row gap6">
+        <div className="row gap6" style={{ flexShrink: 0 }}>
           <LangSwitch compact />
           <button className="icon-btn" onClick={() => nav.push({ t: 'settings' })} aria-label={t('Réglages')}><Cog size={20} /></button>
         </div>

@@ -440,3 +440,13 @@ input, select, textarea { font-size: 16px; }
 .tag-lent { background: #fbbf24; color: #3b2300; text-transform: none; letter-spacing: 0; font-weight: 700; }
 .tag-wish.corner, .tag-lent.corner { position: absolute; top: 6px; left: 6px; max-width: calc(100% - 12px); }
 .tag-lent.corner { top: auto; bottom: 30px; }
+
+/* ===== Clavier : jamais par-dessus le champ ===== */
+:root { --kb: 0px; }
+.overlay { padding-bottom: var(--kb); transition: padding-bottom .2s; }
+.sheet { max-height: calc(92dvh - var(--kb)); }
+.sheet.full { height: calc(100dvh - var(--kb)); max-height: calc(100dvh - var(--kb)); }
+.page { padding-bottom: calc(var(--safe-b) + 100px + var(--kb)); }
+.sheet { scroll-padding-bottom: 40px; }
+body.kb-open .nav, body.kb-open .fab, body.kb-open .float-pill { display: none; }
+.peek-card { padding-bottom: calc(var(--safe-b) + 22px + var(--kb)); }

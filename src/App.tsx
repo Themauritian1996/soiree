@@ -102,7 +102,7 @@ function GeminiStatus() {
   useEffect(() => { onGeminiStatus(setMsg); return () => onGeminiStatus(null); }, []);
   if (!msg) return null;
   return (
-    <div style={{ position: 'fixed', bottom: 'calc(var(--safe-b) + 96px)', left: '50%', transform: 'translateX(-50%)', zIndex: 90 }}>
+    <div className="float-pill" style={{ position: 'fixed', bottom: 'calc(var(--safe-b) + var(--kb, 0px) + 140px)', left: '50%', transform: 'translateX(-50%)', zIndex: 90 }}>
       <div className="row gap6 small" style={{ background: 'var(--s3)', border: '1px solid var(--line2)', borderRadius: 99, padding: '7px 14px', whiteSpace: 'nowrap' }}>
         <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> {msg}
       </div>
@@ -164,7 +164,7 @@ function Enricher() {
 
   if (!current) return null;
   return (
-    <div style={{ position: 'fixed', top: 'calc(var(--safe-t) + 10px)', right: 12, zIndex: 50 }}>
+    <div className="float-pill" style={{ position: 'fixed', bottom: 'calc(var(--safe-b) + var(--kb, 0px) + 92px)', left: 16, zIndex: 50, maxWidth: 'calc(100% - 32px)' }}>
       <div className="row gap6 small" style={{ background: 'var(--s3)', border: '1px solid var(--line2)', borderRadius: 99, padding: '6px 12px 6px 9px', maxWidth: 260 }}>
         <Loader2 size={15} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
         <span className="ellipsis">{t('Fiche :')} {current}{pending.length > 1 ? ` (+${pending.length - 1})` : ''}</span>

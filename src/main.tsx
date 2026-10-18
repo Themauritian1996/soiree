@@ -9,6 +9,9 @@ import { StoreProvider } from './lib/store';
 import { NavProvider } from './lib/nav';
 import { ToastProvider } from './components/ui';
 import { UiProvider, useUi } from './lib/i18n';
+import { initKeyboard } from './lib/keyboard';
+
+initKeyboard();
 
 // Changer de langue re-rend toute l'app (les feuilles ouvertes restent dans la pile)
 function Root() {
