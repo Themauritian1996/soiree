@@ -10,7 +10,7 @@ import { fileToImage, resize } from '../lib/image';
 import type { Item } from '../lib/types';
 import { FORMATS, GAME_CATEGORIES, KIND_META, MEDIA_GENRES, MOODS } from '../lib/vocab';
 import { fmtRuntime } from '../lib/util';
-import { links } from '../lib/meta';
+import { links, openUrl, whereToWatchUrl } from '../lib/meta';
 import LogPlay from '../components/LogPlay';
 import { t, tv, ti, L, getLang } from '../lib/i18n';
 
@@ -130,11 +130,16 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
         {isGame ? (
           <button className="btn" onClick={() => nav.push({ t: 'tool', tool: 'score' })}><Play size={18} /> {t('Feuille de score')}</button>
         ) : (
-          <button className="btn" onClick={() => updateItem(item.id, { status: wish ? 'owned' : 'watchlist' })}><Heart size={18} /> {wish ? t('Je l’ai') : t('À voir')}</button>
+          <button className="btn" onClick={() => openUrl(whereToWatchUrl(item))}><Radio size={18} /> {t('Où le voir')}</button>
         )}
       </div>
 
-      {item.lentTo ? (
+      {!isGame && (
+        <button className={`chip mt12 ${wish ? 'on' : ''}`} style={{ '--accent': 'var(--c-movie)' } as any} onClick={() => updateItem(item.id, { status: wish ? 'seen' : 'watchlist' })}>
+          <Heart size={14} fill={wish ? 'currentColor' : 'none'} /> {wish ? t('Dans ma liste « À voir »') : t('Ajouter à « À voir »')}
+        </button>
+      )}
+      {!isGame ? null : item.lentTo ? (
         <div className="card row mt12" style={{ borderColor: 'color-mix(in srgb, var(--c-suggest) 50%, transparent)' }}>
           <Handshake size={20} color="var(--c-suggest)" />
           <div className="grow small"><b>{t('Prêté à {name}', { name: item.lentTo })}</b>{item.lentAt ? <div className="dim tiny">{t('depuis le {d}', { d: new Date(item.lentAt).toLocaleDateString(getLang() === 'en' ? 'en-CA' : 'fr-CA', { day: 'numeric', month: 'long' }) })}</div> : null}</div>
@@ -150,7 +155,7 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
 
       <div className="scroll-x mt12">
         {links(item).map((l) => (
-          <a key={l.url} className="chip" href={l.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>{l.icon} {l.label} <ExternalLink size={12} /></a>
+          <button key={l.url} className="chip" onClick={() => openUrl(l.url)}>{l.icon} {l.label} <ExternalLink size={12} /></button>
         ))}
       </div>
 

@@ -5,6 +5,7 @@ import { Seg, Sheet, Spinner, useToast } from '../components/ui';
 import { MODEL_OPTIONS, DEFAULT_MODEL, testKey, lastModelUsed } from '../lib/gemini';
 import { demoItems, demoProfiles } from '../lib/demo';
 import { firebaseEnabled } from '../lib/firebase';
+import { openUrl } from '../lib/meta';
 import { t, useUi, type Theme } from '../lib/i18n';
 import type { Lang } from '../lib/types';
 
@@ -66,7 +67,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
         <div className="card col">
           <h3>🔑 Gemini (Google AI)</h3>
           <p className="small muted">{t('Sert à reconnaître les titres sur tes photos, générer les fiches, les règles, les fun facts, les quiz et les suggestions. Clé gratuite sur Google AI Studio.')}</p>
-          <a className="small row gap4" href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">{t('Obtenir une clé')} <ExternalLink size={13} /></a>
+          <button className="small row gap4" style={{ color: 'var(--c-series)' }} onClick={() => openUrl('https://aistudio.google.com/apikey')}>{t('Obtenir une clé')} <ExternalLink size={13} /></button>
           <div className="row">
             <input className="input grow" type={show ? 'text' : 'password'} placeholder="AIza…" value={gk} onChange={(e) => setGk(e.target.value)} autoComplete="off" />
             <button className="icon-btn" onClick={() => setShow(!show)} aria-label={t('Afficher')}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
@@ -85,7 +86,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
         <div className="card col">
           <h3>🎬 TMDB ({t('optionnel')})</h3>
           <p className="small muted">{t('Ajoute les vraies affiches, la distribution exacte et la note des films et séries. Clé gratuite sur themoviedb.org (Paramètres → API).')}</p>
-          <a className="small row gap4" href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">{t('Obtenir une clé')} <ExternalLink size={13} /></a>
+          <button className="small row gap4" style={{ color: 'var(--c-series)' }} onClick={() => openUrl('https://www.themoviedb.org/settings/api')}>{t('Obtenir une clé')} <ExternalLink size={13} /></button>
           <input className="input" type={show ? 'text' : 'password'} placeholder={t('Clé API v3 ou jeton v4')} value={tk} onChange={(e) => setTk(e.target.value)} autoComplete="off" />
         </div>
 

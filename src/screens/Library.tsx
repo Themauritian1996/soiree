@@ -103,7 +103,7 @@ export default function Library() {
         {(status !== 'all' || q) && (
           <button className="chip" onClick={() => { setStatus('all'); setQ(''); }}><X size={13} /> {t('Effacer')}</button>
         )}
-        {(['all', 'owned', 'wish', 'lent'] as const).map((s) => (
+        {(kind === 'game' ? (['all', 'owned', 'wish', 'lent'] as const) : (['all', 'wish'] as const)).map((s) => (
           <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(status === s ? 'all' : s)}>
             {s === 'all' ? t('Tout') : s === 'owned' ? t('À la maison') : s === 'lent' ? `🤝 ${t('Prêtés')}` : kind === 'game' ? t('Liste de souhaits') : t('À voir')}
           </button>
@@ -194,22 +194,24 @@ function Spine({ item, i, onPick }: { item: Item; i: number; onPick: (i: Item) =
   const thick = isGame ? 46 + Math.round(Math.min(5, item.weight || 2) * 4) : 40;
   const wish = item.status === 'wishlist' || item.status === 'watchlist';
   const h = hash(item.id);
+  const off = (h >> 3) % (isGame ? 9 : 5);
   const meta = isGame
     ? [item.maxPlayers ? `${item.minPlayers && item.minPlayers !== item.maxPlayers ? `${item.minPlayers}–` : ''}${item.maxPlayers} j.` : '', item.maxTime || item.minTime ? `${item.maxTime || item.minTime}′` : ''].filter(Boolean).join(' · ')
     : [item.year, item.kind === 'series' && item.seasons ? `${item.seasons}S` : item.runtime ? fmtRuntime(item.runtime) : ''].filter(Boolean).join(' · ');
   return (
-    <button className={`spine2 ${wish ? 'wish' : ''} ${item.lentTo ? 'lent' : ''}`} onClick={() => onPick(item)} title={ti(item)}
+    <button className="spine2" onClick={() => onPick(item)} title={ti(item)}
       style={{
         height: thick, color: ink,
-        width: `${isGame ? 90 + (h % 11) : 94 + (h % 7)}%`,
-        marginLeft: `${(h >> 3) % (isGame ? 9 : 5)}%`,
+        width: `${(isGame ? 91 + (h % 9) : 95 + (h % 5)) - off}%`,
+        marginLeft: `${off}%`,
         background: col ? `linear-gradient(180deg, color-mix(in srgb, ${bg} 82%, white) 0%, ${bg} 18%, ${bg} 80%, color-mix(in srgb, ${bg} 70%, black) 100%)` : `linear-gradient(90deg, ${a}, ${b})`,
         animationDelay: `${Math.min(i, 12) * 25}ms`,
       }}>
       {item.image ? <img className="spine-thumb" src={item.image} alt="" loading="lazy" /> : <span className="spine-emoji">{KIND_META[item.kind].emoji}</span>}
       <span className="spine-title">{ti(item)}</span>
-      {meta && <span className="spine-meta">{meta}</span>}
-      {item.lentTo && <span className="spine-flag">🤝</span>}
+      {wish && <span className="tag-wish">{isGame ? t('Souhait') : t('À voir')}</span>}
+      {item.lentTo && isGame && <span className="tag-lent">🤝 {item.lentTo}</span>}
+      {meta && !wish && !item.lentTo && <span className="spine-meta">{meta}</span>}
     </button>
   );
 }
@@ -217,10 +219,11 @@ function Spine({ item, i, onPick }: { item: Item; i: number; onPick: (i: Item) =
 function WallTile({ item, onPick }: { item: Item; onPick: (i: Item) => void }) {
   const wish = item.status === 'wishlist' || item.status === 'watchlist';
   return (
-    <button className={`tile ${wish ? 'wish' : ''}`} onClick={() => onPick(item)}>
+    <button className="tile" onClick={() => onPick(item)}>
       <Cover item={item} className="tile-cover" />
       {item.image && <span className="tile-title">{ti(item)}</span>}
-      {item.lentTo && <span className="badge" style={{ left: 'auto', right: 6 }}>🤝</span>}
+      {wish && <span className="tag-wish corner">{item.kind === 'game' ? t('Souhait') : t('À voir')}</span>}
+      {item.lentTo && item.kind === 'game' && <span className="tag-lent corner">🤝 {item.lentTo}</span>}
     </button>
   );
 }
@@ -232,7 +235,7 @@ export function InventoryRow({ item, right, onClick }: { item: Item; right?: Rea
     <button className="inv-row" onClick={onClick || (() => nav.push({ t: 'item', id: item.id }))}>
       <Cover item={item} />
       <div className="grow" style={{ minWidth: 0 }}>
-        <div className="row gap6"><b className="ellipsis">{ti(item)}</b>{wish && <span className="chip static" style={{ height: 20, fontSize: 10.5 }}>{item.kind === 'game' ? t('Souhait') : t('À voir')}</span>}</div>
+        <div className="row gap6"><b className="ellipsis">{ti(item)}</b>{wish && <span className="tag-wish">{item.kind === 'game' ? t('Souhait') : t('À voir')}</span>}{item.lentTo && item.kind === 'game' && <span className="tag-lent">🤝 {item.lentTo}</span>}</div>
         <div className="meta mt8" style={{ marginTop: 3 }}>
           {item.kind === 'game' ? (
             <>

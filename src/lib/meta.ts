@@ -70,6 +70,23 @@ export async function freeLookup(item: Pick<Item, 'kind' | 'title' | 'year' | 'o
 }
 
 // ---------------------------------------------------------------- Liens utiles
+/** JustWatch Canada (fonctionne en FR et EN). */
+export const whereToWatchUrl = (item: Item) => `https://www.justwatch.com/ca/search?q=${encodeURIComponent(item.originalTitle || item.title)}`;
+
+/** Ouvre un lien externe : navigateur intégré dans l'APK, nouvel onglet sur le site. */
+export async function openUrl(url: string) {
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform()) {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url, toolbarColor: '#0B0B10' });
+      return;
+    }
+  } catch { /* repli web */ }
+  const w = window.open(url, '_blank', 'noopener');
+  if (!w) location.href = url;
+}
+
 export function links(item: Item) {
   const q = encodeURIComponent(item.originalTitle || item.title);
   const en = getLang() === 'en';
@@ -83,7 +100,7 @@ export function links(item: Item) {
   return [
     { label: en ? 'Trailer' : 'Bande-annonce', url: `https://www.youtube.com/results?search_query=${q}+${item.year || ''}+${en ? 'trailer' : 'bande+annonce'}`, icon: '▶️' },
     { label: 'IMDb', url: item.imdbId ? `https://www.imdb.com/title/${item.imdbId}/` : `https://www.imdb.com/find/?q=${q}`, icon: '⭐' },
-    { label: en ? 'Where to watch' : 'Où le voir', url: `https://www.justwatch.com/ca/${en ? 'search' : 'recherche'}?q=${q}`, icon: '📡' },
+    { label: en ? 'Where to watch' : 'Où le voir', url: whereToWatchUrl(item), icon: '📡' },
     ...(item.wikiUrl ? [{ label: 'Wikipédia', url: item.wikiUrl, icon: '📖' }] : []),
   ];
 }
