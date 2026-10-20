@@ -60,13 +60,14 @@ export default function Library() {
   const [group, setGroupS] = useState<Record<Kind, Group>>(() => lsGet('soiree.libgroup', { game: 'type', movie: 'genre', series: 'genre' } as Record<Kind, Group>));
   const setGroup = (g: Record<Kind, Group>) => { setGroupS(g); lsSet('soiree.libgroup', g); };
   const [peek, setPeek] = useState<Item | null>(null);
-  const [status, setStatus] = useState<'all' | 'owned' | 'wish' | 'lent'>('all');
+  const [status, setStatus] = useState<'all' | 'owned' | 'wish' | 'lent' | 'sugg'>('all');
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<'recent' | 'alpha' | 'match' | 'time' | 'year'>('alpha');
   const [addMenu, setAddMenu] = useState(false);
 
+  const isSugg = (i: Item) => (i.tags || []).includes('reco-à-valider');
   const list = useMemo(() => items.filter((i) => i.kind === kind)
-    .filter((i) => status === 'all' || (status === 'lent' ? !!i.lentTo : status === 'owned' ? i.status === 'owned' || i.status === 'seen' : i.status === 'wishlist' || i.status === 'watchlist'))
+    .filter((i) => status === 'all' || (status === 'lent' ? !!i.lentTo : status === 'sugg' ? isSugg(i) : status === 'owned' ? i.status === 'owned' || i.status === 'seen' : i.status === 'wishlist' || i.status === 'watchlist'))
     .filter((i) => !q || norm([i.title, ti(i), i.originalTitle, i.designer, i.director, ...(i.cast || []), ...(i.categories || []), ...(i.genres || [])].join(' ')).includes(norm(q))),
   [items, kind, status, q]);
 
@@ -103,9 +104,9 @@ export default function Library() {
         {(status !== 'all' || q) && (
           <button className="chip" onClick={() => { setStatus('all'); setQ(''); }}><X size={13} /> {t('Effacer')}</button>
         )}
-        {(kind === 'game' ? (['all', 'owned', 'wish', 'lent'] as const) : (['all', 'wish'] as const)).map((s) => (
+        {(kind === 'game' ? (['all', 'owned', 'wish', 'sugg', 'lent'] as const) : (['all', 'wish', 'sugg'] as const)).map((s) => (
           <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(status === s ? 'all' : s)}>
-            {s === 'all' ? t('Tout') : s === 'owned' ? t('À la maison') : s === 'lent' ? `🤝 ${t('Prêtés')}` : kind === 'game' ? t('Liste de souhaits') : t('À voir')}
+            {s === 'all' ? t('Tout') : s === 'owned' ? t('À la maison') : s === 'lent' ? `🤝 ${t('Prêtés')}` : s === 'sugg' ? `💡 ${t('Suggestions')}` : kind === 'game' ? t('Liste de souhaits') : t('À voir')}
           </button>
         ))}
         <span style={{ width: 1, background: 'var(--line)', margin: '4px 2px' }} />
@@ -193,6 +194,7 @@ function Spine({ item, i, onPick }: { item: Item; i: number; onPick: (i: Item) =
   const isGame = item.kind === 'game';
   const thick = isGame ? 46 + Math.round(Math.min(5, item.weight || 2) * 4) : 40;
   const wish = item.status === 'wishlist' || item.status === 'watchlist';
+  const sugg = (item.tags || []).includes('reco-à-valider');
   const h = hash(item.id);
   const off = (h >> 3) % (isGame ? 9 : 5);
   const meta = isGame
@@ -210,6 +212,7 @@ function Spine({ item, i, onPick }: { item: Item; i: number; onPick: (i: Item) =
       {item.image ? <img className="spine-thumb" src={item.image} alt="" loading="lazy" /> : <span className="spine-emoji">{KIND_META[item.kind].emoji}</span>}
       <span className="spine-title">{ti(item)}</span>
       {wish && <span className="tag-wish">{isGame ? t('Souhait') : t('À voir')}</span>}
+      {sugg && <span className="tag-sugg">💡</span>}
       {item.lentTo && isGame && <span className="tag-lent">🤝 {item.lentTo}</span>}
       {meta && !wish && !item.lentTo && <span className="spine-meta">{meta}</span>}
     </button>
@@ -218,11 +221,13 @@ function Spine({ item, i, onPick }: { item: Item; i: number; onPick: (i: Item) =
 
 function WallTile({ item, onPick }: { item: Item; onPick: (i: Item) => void }) {
   const wish = item.status === 'wishlist' || item.status === 'watchlist';
+  const sugg = (item.tags || []).includes('reco-à-valider');
   return (
     <button className="tile" onClick={() => onPick(item)}>
       <Cover item={item} className="tile-cover" />
       {item.image && <span className="tile-title">{ti(item)}</span>}
       {wish && <span className="tag-wish corner">{item.kind === 'game' ? t('Souhait') : t('À voir')}</span>}
+      {sugg && <span className="tag-sugg corner">💡</span>}
       {item.lentTo && item.kind === 'game' && <span className="tag-lent corner">🤝 {item.lentTo}</span>}
     </button>
   );
@@ -231,11 +236,12 @@ function WallTile({ item, onPick }: { item: Item; onPick: (i: Item) => void }) {
 export function InventoryRow({ item, right, onClick }: { item: Item; right?: React.ReactNode; onClick?: () => void }) {
   const nav = useNav();
   const wish = item.status === 'wishlist' || item.status === 'watchlist';
+  const sugg = (item.tags || []).includes('reco-à-valider');
   return (
     <button className="inv-row" onClick={onClick || (() => nav.push({ t: 'item', id: item.id }))}>
       <Cover item={item} />
       <div className="grow" style={{ minWidth: 0 }}>
-        <div className="row gap6"><b className="ellipsis">{ti(item)}</b>{wish && <span className="tag-wish">{item.kind === 'game' ? t('Souhait') : t('À voir')}</span>}{item.lentTo && item.kind === 'game' && <span className="tag-lent">🤝 {item.lentTo}</span>}</div>
+        <div className="row gap6"><b className="ellipsis">{ti(item)}</b>{wish && <span className="tag-wish">{item.kind === 'game' ? t('Souhait') : t('À voir')}</span>}{sugg && <span className="tag-sugg">💡</span>}{item.lentTo && item.kind === 'game' && <span className="tag-lent">🤝 {item.lentTo}</span>}</div>
         <div className="meta mt8" style={{ marginTop: 3 }}>
           {item.kind === 'game' ? (
             <>
