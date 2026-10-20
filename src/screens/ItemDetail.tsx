@@ -211,6 +211,11 @@ export default function ItemDetail({ id, onClose }: { id: string; onClose: () =>
 
       <hr />
       <div className="row wrap gap6">
+        {(item.tags || []).includes('reco-à-valider') && (
+          <button className="btn sm" style={{ background: '#fef08a', color: '#713f12', borderColor: '#eab308' }} onClick={() => updateItem(item.id, { tags: (item.tags || []).filter((x) => x !== 'reco-à-valider') }).then(() => toast(t('Suggestion acceptée — elle fait partie de ta collection')))}>
+            💡 {t('Accepter la suggestion')}
+          </button>
+        )}
         <button className="btn sm" onClick={refresh} disabled={refreshing || !settings.geminiKey}>{refreshing ? <Spinner size={14} /> : <RefreshCw size={15} />} {t('Régénérer la fiche')}</button>
         {isGame && <button className="btn sm" onClick={() => updateItem(item.id, { status: wish ? 'owned' : 'wishlist' })}>{wish ? t('Je l’ai maintenant') : t('Déplacer en souhaits')}</button>}
         <button className="btn sm danger" onClick={async () => { if (confirm(t('Retirer « {title} » de la collection ?', { title: lx.title }))) { await deleteItem(item.id); onClose(); } }}><Trash2 size={15} /> {t('Retirer')}</button>

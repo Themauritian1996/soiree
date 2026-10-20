@@ -75,6 +75,8 @@ export const EN: Record<string, string> = {
   'Fiche mise à jour': 'Sheet updated', 'Partie notée 🎲': 'Game logged 🎲', 'Marqué comme vu 🍿': 'Marked as watched 🍿',
   'Aperçu': 'Overview', 'Règles': 'Rules', 'Fun facts': 'Fun facts', 'Questions': 'Questions', 'Notes': 'Notes',
   'Retour': 'Back', 'Photo': 'Photo', 'Modifier': 'Edit', 'souhait': 'wishlist', 'L’IA prépare la fiche…': 'AI is preparing the sheet…',
+  'Accepter la suggestion': 'Accept suggestion',
+  'Suggestion acceptée — elle fait partie de ta collection': 'Suggestion accepted — it is part of your collection now',
   'Fiche incomplète :': 'Incomplete sheet:', 'Réessayer': 'Retry', 'idéal': 'best', 'âge': 'age', 'complexité /5': 'complexity /5',
   'année': 'year', 'par épisode': 'per episode', 'durée': 'length', 'saisons': 'seasons', 'format': 'format',
   'On y a joué': 'We played it', 'Vu': 'Watched', 'Feuille de score': 'Score sheet', 'Je l’ai': 'I own it', 'À voir': 'Watchlist',

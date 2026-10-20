@@ -39,24 +39,30 @@ function sanitize(d: any): DealsFile {
 export async function fetchDeals(householdId?: string): Promise<DealsFile> {
   const now = Date.now();
   if (cache && now - cache.at < CACHE_MS) return cache.data;
+  // Sécurité : ne jamais rester bloqué plus de 8 s (sinon l'écran reste vide).
+  try {
+    const data = await Promise.race([
+      loadDeals(householdId),
+      new Promise<DealsFile>((res) => setTimeout(() => res(EMPTY), 8000)),
+    ]);
+    cache = { at: now, data };
+    return data;
+  } catch {
+    return EMPTY;
+  }
+}
+
+async function loadDeals(householdId?: string): Promise<DealsFile> {
   // Firestore d'abord (écrit par la veille), repli sur le deals.json du site.
   if (db && householdId) {
     try {
       const snap = await getDoc(doc(db, 'households', householdId, 'deals', 'current'));
-      if (snap.exists()) {
-        const data = sanitize(snap.data());
-        cache = { at: now, data };
-        return data;
-      }
+      if (snap.exists()) return sanitize(snap.data());
     } catch { /* repli JSON */ }
   }
   try {
     const r = await fetch('https://themauritian1996.github.io/soiree/deals.json', { cache: 'no-store' });
-    if (r.ok) {
-      const data = sanitize(await r.json());
-      cache = { at: now, data };
-      return data;
-    }
+    if (r.ok) return sanitize(await r.json());
   } catch { /* rien */ }
   return EMPTY;
 }
