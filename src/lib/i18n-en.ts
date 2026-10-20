@@ -217,4 +217,12 @@ export const EN: Record<string, string> = {
   'Ajoute ta clé Gemini dans Réglages pour les suggestions IA. Ton envie trie déjà la liste ci-dessous.': 'Add your Gemini key in Settings for AI picks. Your mood already sorts the list below.',
   'Envie': 'Mood',
   'Correspond à ton envie': 'Matches your mood',
+
+  // Aubaines (veille prix)
+  'Aubaines': 'Deals', 'Bons plans': 'Hot deals', 'Voir l’offre': 'See the deal',
+  'Dernière vérification : {d}': 'Last checked: {d}',
+  'Aucune aubaine pour le moment': 'No deals right now',
+  'La veille vérifie les prix tous les 3 jours': 'Prices are checked every 3 days',
+  'Chargement…': 'Loading…', 'Vérification des prix…': 'Checking prices…',
+  '{n} aubaine en ce moment': '{n} deal right now', '{n} aubaines en ce moment': '{n} deals right now',
 };

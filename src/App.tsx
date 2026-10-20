@@ -16,6 +16,7 @@ import AddManual from './screens/AddManual';
 import Suggest from './screens/Suggest';
 import Party from './screens/Party';
 import Blend from './screens/Blend';
+import Deals from './screens/Deals';
 import Tools, { ToolScreen } from './screens/Tools';
 import Profiles, { ProfileEditor } from './screens/Profiles';
 import Settings from './screens/Settings';
@@ -87,6 +88,7 @@ export default function App() {
           case 'settings': return <Settings key={key} onClose={close} />;
           case 'party': return <Party key={key} initialKind={r.kind} onClose={close} />;
           case 'blend': return <Blend key={key} initialKind={r.kind} onClose={close} />;
+          case 'deals': return <Deals key={key} onClose={close} />;
           case 'tool': return <ToolScreen key={key} tool={r.tool} players={r.players} onClose={close} />;
         }
       })}
@@ -125,8 +127,9 @@ function Enricher() {
     if (busy.current || !pending.length) return;
     busy.current = true;
     (async () => {
-      const it = pending[0];
-      setCurrent(it.title);
+      try {
+        const it = pending[0];
+        setCurrent(it.title);
       let patch: Partial<Item> = {};
       let base: Item = it;
       if (needsAi(it)) {
@@ -156,9 +159,12 @@ function Enricher() {
       }
       await updateItem(it.id, patch);
       await sleep(300);
-      setCurrent(null);
-      busy.current = false;
-      setTick((x) => x + 1);
+      } finally {
+        // La file ne doit jamais se figer : même si updateItem lève, on libère busy.
+        setCurrent(null);
+        busy.current = false;
+        setTick((x) => x + 1);
+      }
     })();
   }, [pending.length, settings.geminiKey, tick]);
 

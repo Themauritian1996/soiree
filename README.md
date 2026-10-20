@@ -19,6 +19,21 @@ Application (APK Android + site web) pour cataloguer tes **jeux de société, fi
 | **Soirée cinéma** | Temps restant avant le dodo → film ou épisodes ? + minuterie. |
 | **Comptes** | Google ou courriel (Firebase). Un **foyer** partagé : ta conjointe rejoint avec un code et voit la même collection. Mode local sans compte possible. |
 
+## 🔥 Aubaines (veille prix jeux de société)
+
+Tous les 3 jours, une veille vérifie les prix des jeux de ta liste de souhaits dans les magasins
+surveillés (**Imaginaire**, **Renaud-Bray**, + Valet d'Cœur / Randolph / Amazon.ca) et les baisses
+de prix apparaissent dans l'app (carte « 🔥 Aubaines » sur l'accueil, badge = nombre de deals actifs).
+
+| Fichier | Rôle |
+|---|---|
+| `public/watchlist.json` | Jeux à surveiller : `{ "games": [{ "title": "Azul", "targetPrice": 40 }] }`. `targetPrice` optionnel (alerte si prix ≤ cible). |
+| `public/deals.json` | Généré par la veille : `{ "updatedAt": "…", "deals": [{ "id", "title", "store", "price", "regularPrice", "url", "dropPct", "checkedAt" }] }`. |
+
+L'app lit `https://themauritian1996.github.io/soiree/deals.json` (repli `./deals.json` en local),
+avec cache mémoire de 6 h. L'écran `Deals` affiche prix en gras, ancien prix barré, % de baisse
+et un bouton « Voir l'offre ».
+
 ---
 
 ## Installation (une seule fois, ~30 min)

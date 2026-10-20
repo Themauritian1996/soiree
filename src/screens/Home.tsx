@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Settings as Cog, KeyRound, ChevronRight, RefreshCw, Cloud, HardDrive } from 'lucide-react';
 import { useStore } from '../lib/store';
 import { useNav } from '../lib/nav';
@@ -8,7 +8,8 @@ import { demoItems, demoProfiles } from '../lib/demo';
 import type { Item, Kind } from '../lib/types';
 import { KIND_META } from '../lib/vocab';
 import { fmtPlayers, fmtTime, fmtRuntime } from '../lib/util';
-import { t, ti } from '../lib/i18n';
+import { t, ti, tp } from '../lib/i18n';
+import { fetchDeals } from '../lib/deals';
 import { LangSwitch } from '../lib/i18n';
 
 const greet = () => {
@@ -36,6 +37,13 @@ export default function Home() {
   }, [active, items]);
 
   const recent = items.slice(0, 10);
+
+  const [dealCount, setDealCount] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetchDeals(household?.id).then((d) => { if (alive) setDealCount(d.deals.length); });
+    return () => { alive = false; };
+  }, [household?.id]);
 
   const loadDemo = async () => {
     const ps = demoProfiles();
@@ -89,6 +97,14 @@ export default function Home() {
           <span className="big-emoji">🎰</span>
           <span className="eyebrow" style={{ color: 'rgba(255,255,255,.8)' }}>{t('Indécis ?')}</span>
           <div><h3>{t('Au hasard')}</h3><p>{t('Laisse le destin choisir')}</p></div>
+        </button>
+        <button className="hero-card" style={{ '--g1': '#F43F5E', '--g2': '#F59E0B' } as any} onClick={() => nav.push({ t: 'deals' })}>
+          <span className="big-emoji">🔥</span>
+          <span className="eyebrow" style={{ color: 'rgba(255,255,255,.8)' }}>{t('Bons plans')}</span>
+          <div><h3>{t('Aubaines')}</h3><p>{dealCount == null ? t('Vérification des prix…') : dealCount > 0 ? tp(dealCount, '{n} aubaine en ce moment', '{n} aubaines en ce moment') : t('La veille vérifie les prix tous les 3 jours')}</p></div>
+          {dealCount != null && dealCount > 0 && (
+            <span style={{ position: 'absolute', top: 10, right: 12, background: '#fff', color: '#7c2d12', borderRadius: 99, padding: '2px 10px', fontWeight: 800, fontSize: 13 }}>{dealCount}</span>
+          )}
         </button>
       </div>
 

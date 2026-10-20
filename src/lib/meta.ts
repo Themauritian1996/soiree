@@ -33,6 +33,20 @@ export async function tvmaze(title: string): Promise<Partial<Item> | null> {
   } catch { return null; }
 }
 
+/** Nettoie une URL d'image : retire les paramètres utm_* (ajoutés par l'API Wikimedia
+ *  depuis 2025) et rejette les SVG (logos/icônes génériques). Retourne undefined si inutilisable. */
+export function cleanImg(u?: string): string | undefined {
+  if (!u || /\.svg/i.test(u)) return undefined;
+  try {
+    const url = new URL(u);
+    let changed = false;
+    for (const k of [...url.searchParams.keys()]) {
+      if (/^utm_/i.test(k)) { url.searchParams.delete(k); changed = true; }
+    }
+    return changed ? url.toString() : u;
+  } catch { return u; }
+}
+
 /** Wikipédia — image principale + résumé, dans la langue de l'app (repli EN). */
 export async function wikipedia(kind: Kind, title: string, year?: number): Promise<Partial<Item> | null> {
   const tries: [string, string][] = [];
@@ -41,15 +55,15 @@ export async function wikipedia(kind: Kind, title: string, year?: number): Promi
   for (const l of lang === 'fr' ? ['fr', 'en'] : ['en', 'fr']) tries.push([l, `${title} ${hint(l)}${year && kind !== 'game' ? ' ' + year : ''}`]);
   for (const [l, q] of tries) {
     try {
-      const url = `https://${l}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=1&prop=pageimages|extracts|info&inprop=url&piprop=original|thumbnail&pithumbsize=600&exintro=1&explaintext=1&exsentences=3`;
+      const url = `https://${l}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=3&prop=pageimages|extracts|info&inprop=url&piprop=original|thumbnail&pithumbsize=600&exintro=1&explaintext=1&exsentences=3`;
       const d = await getJSON(url);
-      const pages = Object.values(d?.query?.pages || {}) as any[];
+      const pages = (Object.values(d?.query?.pages || {}) as any[])
+        .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+        .filter((p) => !/homonymie|disambiguation/i.test(p.title || ''));
       const p = pages[0];
       if (!p) continue;
-      const img = p.thumbnail?.source || p.original?.source;
-      // On évite les logos/icônes génériques en SVG
-      const okImg = img && !/\.svg/i.test(img) ? img : undefined;
-      return { image: okImg, wikiUrl: p.fullurl, wikiSummary: p.extract || undefined } as Partial<Item>;
+      const img = cleanImg(p.thumbnail?.source || p.original?.source);
+      return { image: img, wikiUrl: p.fullurl, wikiSummary: p.extract || undefined } as Partial<Item>;
     } catch { /* langue suivante */ }
   }
   return null;

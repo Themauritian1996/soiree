@@ -11,6 +11,7 @@ export type Route =
   | { t: 'settings' }
   | { t: 'party'; kind?: 'game' | 'media' }
   | { t: 'blend'; kind?: Kind }
+  | { t: 'deals' }
   | { t: 'tool'; tool: ToolId; players?: string[] };
 
 interface NavCtx {
