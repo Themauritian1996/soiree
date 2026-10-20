@@ -4,12 +4,16 @@ import {
   doc, getDoc, setDoc, updateDoc, onSnapshot, collection, deleteDoc, writeBatch, arrayUnion,
 } from 'firebase/firestore';
 import { db, firebaseEnabled, watchUser, signOut as fbSignOut } from './firebase';
+import { initPush } from './push';
 import type { Household, Item, Play, Profile, Settings } from './types';
 import { lsGet, lsSet, stripUndefined, uid } from './util';
 import { PROFILE_COLORS, PROFILE_EMOJIS } from './vocab';
 import { t } from './i18n';
 
 type Mode = 'loading' | 'signedOut' | 'local' | 'cloud';
+
+// Garde : initPush() n'est appelé qu'une fois par uid et par session.
+const pushRegistered = new Set<string>();
 
 export function newProfile(name: string, i = 0, guest = false): Profile {
   return {
@@ -83,8 +87,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
     return watchUser((u) => {
       setUser(u);
-      if (u) setMode('cloud');
-      else setMode(lsGet<string>(LS_MODE, '') === 'local' ? 'local' : 'signedOut');
+      if (u) {
+        setMode('cloud');
+        if (!pushRegistered.has(u.uid)) {
+          pushRegistered.add(u.uid);
+          initPush(u.uid);
+        }
+      } else setMode(lsGet<string>(LS_MODE, '') === 'local' ? 'local' : 'signedOut');
     });
   }, []);
 
