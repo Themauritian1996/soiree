@@ -60,7 +60,12 @@ export async function wikipedia(kind: Kind, title: string, year?: number): Promi
       const pages = (Object.values(d?.query?.pages || {}) as any[])
         .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
         .filter((p) => !/homonymie|disambiguation/i.test(p.title || ''));
-      const p = pages[0];
+      // Pour les jeux : n'accepter que les pages qui parlent vraiment d'un jeu
+      // (évite les homonymes, ex. « Gaudí » l'architecte au lieu du jeu).
+      // Mieux vaut aucune image qu'une mauvaise.
+      const p = kind === 'game'
+        ? pages.find((p) => /jeu de société|board game|jeu de plateau|jeu de cartes|card game/i.test(p.extract || ''))
+        : pages[0];
       if (!p) continue;
       const img = cleanImg(p.thumbnail?.source || p.original?.source);
       return { image: img, wikiUrl: p.fullurl, wikiSummary: p.extract || undefined } as Partial<Item>;

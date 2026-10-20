@@ -30,8 +30,9 @@ export default function Deals({ onClose }: { onClose: () => void }) {
       ) : data.deals.length === 0 ? (
         <div className="center" style={{ padding: '36px 20px' }}>
           <div style={{ fontSize: 56, opacity: .35 }}>🔥</div>
-          <h3 className="mt12">{t('Aucune aubaine pour le moment')}</h3>
-          <p className="muted small mt8">{t('La veille vérifie les prix tous les 3 jours')}</p>
+          <h3 className="mt12">{t('Aucune aubaine en cours')}</h3>
+          <p className="muted small mt8">{t('La veille vérifie les prix tous les jours')}</p>
+          <button className="btn mt20" onClick={onClose}>{t('Retour')}</button>
         </div>
       ) : (
         <div className="col gap8">
