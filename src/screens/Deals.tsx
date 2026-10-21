@@ -16,9 +16,17 @@ export default function Deals({ onClose }: { onClose: () => void }) {
     return () => { alive = false; };
   }, [household?.id]);
 
-  const checked = data?.updatedAt
-    ? new Date(data.updatedAt).toLocaleDateString(getLang() === 'en' ? 'en-CA' : 'fr-CA', { dateStyle: 'medium', timeStyle: 'short' })
-    : null;
+  // Formatage défensif : toLocaleDateString avec dateStyle/timeStyle plante
+  // sur certains WebView Android → écran noir. Version simple + try/catch.
+  const checked = (() => {
+    if (!data?.updatedAt) return null;
+    try {
+      const d = new Date(data.updatedAt);
+      if (isNaN(d.getTime())) return null;
+      const loc = getLang() === 'en' ? 'en-CA' : 'fr-CA';
+      return `${d.toLocaleDateString(loc)} ${d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })}`;
+    } catch { return null; }
+  })();
 
   return (
     <Sheet title={`🔥 ${t('Aubaines')}`} onClose={onClose}>
