@@ -151,7 +151,7 @@ function Enricher() {
           // Une vraie affiche (film/série) vaut mieux qu'un recadrage de photo
           if (f.image && (!base.image || (cropOnly && base.kind !== 'game'))) extra.image = f.image;
           if (!base.summary && f.wikiSummary) extra.summary = f.wikiSummary;
-          for (const k of ['year', 'runtime', 'seasons', 'cast', 'tmdbRating', 'whereToWatch', 'imdbId', 'wikiUrl', 'externalUrl'] as const) {
+          for (const k of ['year', 'runtime', 'seasons', 'cast', 'tmdbRating', 'whereToWatch', 'imdbId', 'wikiUrl', 'externalUrl', 'anime'] as const) {
             if ((base as any)[k] == null && (f as any)[k] != null) (extra as any)[k] = (f as any)[k];
           }
           patch = { ...patch, ...extra };

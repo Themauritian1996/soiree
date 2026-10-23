@@ -18,7 +18,10 @@ export async function tvmaze(title: string): Promise<Partial<Item> | null> {
     if (!s?.id) return null;
     const cast = (s._embedded?.cast || []).slice(0, 6).map((c: any) => c.person?.name).filter(Boolean);
     const seasons = (s._embedded?.seasons || []).filter((x: any) => x.number > 0).length || undefined;
+    // Anime : émission japonaise d'animation (TVmaze : langue + type/genre)
+    const anime = s.language === 'Japanese' && (s.type === 'Animation' || (s.genres || []).includes('Anime')) ? true : undefined;
     return {
+      anime,
       image: s.image?.original || s.image?.medium || undefined,
       year: s.premiered ? +s.premiered.slice(0, 4) : undefined,
       runtime: s.averageRuntime || s.runtime || undefined,

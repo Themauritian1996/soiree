@@ -28,6 +28,8 @@ export async function tmdbLookup(settings: Settings, kind: Kind, title: string, 
     tmdbId: hit.id,
     image: hit.poster_path ? IMG + hit.poster_path : undefined,
     tmdbRating: hit.vote_average ? Math.round(hit.vote_average * 10) / 10 : undefined,
+    // Anime : animation (genre TMDB 16) en langue originale japonaise
+    anime: hit.original_language === 'ja' && (hit.genre_ids || []).includes(16) ? true : undefined,
   };
   try {
     const d = await get(settings, `/${type}/${hit.id}`, { append_to_response: 'credits' });

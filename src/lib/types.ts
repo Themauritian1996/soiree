@@ -53,6 +53,7 @@ export interface Item {
   rules?: Rules;
   // Films / séries
   genres?: string[];
+  anime?: boolean; // série/film d'animation japonais (détecté via TMDB/TVmaze ou tagué)
   director?: string;
   cast?: string[];
   runtime?: number;

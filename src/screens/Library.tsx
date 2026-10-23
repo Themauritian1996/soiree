@@ -60,14 +60,15 @@ export default function Library() {
   const [group, setGroupS] = useState<Record<Kind, Group>>(() => lsGet('soiree.libgroup', { game: 'type', movie: 'genre', series: 'genre' } as Record<Kind, Group>));
   const setGroup = (g: Record<Kind, Group>) => { setGroupS(g); lsSet('soiree.libgroup', g); };
   const [peek, setPeek] = useState<Item | null>(null);
-  const [status, setStatus] = useState<'all' | 'owned' | 'wish' | 'lent' | 'sugg'>('all');
+  const [status, setStatus] = useState<'all' | 'owned' | 'wish' | 'lent' | 'sugg' | 'anime'>('all');
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<'recent' | 'alpha' | 'match' | 'time' | 'year'>('alpha');
   const [addMenu, setAddMenu] = useState(false);
 
   const isSugg = (i: Item) => (i.tags || []).includes('reco-à-valider');
+  const isAnime = (i: Item) => i.kind !== 'game' && (!!i.anime || (i.tags || []).includes('anime'));
   const list = useMemo(() => items.filter((i) => i.kind === kind)
-    .filter((i) => status === 'all' || (status === 'lent' ? !!i.lentTo : status === 'sugg' ? isSugg(i) : status === 'owned' ? i.status === 'owned' || i.status === 'seen' : i.status === 'wishlist' || i.status === 'watchlist'))
+    .filter((i) => status === 'all' || (status === 'lent' ? !!i.lentTo : status === 'sugg' ? isSugg(i) : status === 'anime' ? isAnime(i) : status === 'owned' ? i.status === 'owned' || i.status === 'seen' : i.status === 'wishlist' || i.status === 'watchlist'))
     .filter((i) => !q || norm([i.title, ti(i), i.originalTitle, i.designer, i.director, ...(i.cast || []), ...(i.categories || []), ...(i.genres || [])].join(' ')).includes(norm(q))),
   [items, kind, status, q]);
 
@@ -104,9 +105,9 @@ export default function Library() {
         {(status !== 'all' || q) && (
           <button className="chip" onClick={() => { setStatus('all'); setQ(''); }}><X size={13} /> {t('Effacer')}</button>
         )}
-        {(kind === 'game' ? (['all', 'owned', 'wish', 'sugg', 'lent'] as const) : (['all', 'wish', 'sugg'] as const)).map((s) => (
+        {(kind === 'game' ? (['all', 'owned', 'wish', 'sugg', 'lent'] as const) : (['all', 'wish', 'sugg', 'anime'] as const)).map((s) => (
           <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(status === s ? 'all' : s)}>
-            {s === 'all' ? t('Tout') : s === 'owned' ? t('À la maison') : s === 'lent' ? `🤝 ${t('Prêtés')}` : s === 'sugg' ? `💡 ${t('Suggestions')}` : kind === 'game' ? t('Liste de souhaits') : t('À voir')}
+            {s === 'all' ? t('Tout') : s === 'owned' ? t('À la maison') : s === 'lent' ? `🤝 ${t('Prêtés')}` : s === 'sugg' ? `💡 ${t('Suggestions')}` : s === 'anime' ? '🎌 Anime' : kind === 'game' ? t('Liste de souhaits') : t('À voir')}
           </button>
         ))}
         <span style={{ width: 1, background: 'var(--line)', margin: '4px 2px' }} />
